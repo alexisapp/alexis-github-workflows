@@ -244,7 +244,7 @@ jobs:
       if: always()
 
   setup-build-publish-deploy-release:
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    if: contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -330,25 +330,25 @@ jobs:
           kubectl -n sandbox rollout status deployment/$DEPLOYMENT-worker-deployment
         fi         
 
-    - name: Get the GKE credentials so we can deploy to the cluster
-      uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
-      with:
-        cluster_name: ${{ env.PROD_CLUSTER }}
-        location: "europe-west1"
-        credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
-        project_id: ${{ env.PROD_PROJECT }}       
-    - name: Deploy Production
-      run: |-
-        kubectl -n production set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-        kubectl -n production rollout status deployment/$DEPLOYMENT-server-deployment
-        kubectl -n production get services -o wide
-        if [[ ${{ inputs.migrations }} == 'true' ]]; then
-          kubectl -n production set image cronjob/$DEPLOYMENT-migration
-        fi
-        if [[ ${{ inputs.workers }} == 'true' ]]; then
-          kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment
-          kubectl -n production rollout status deployment/$DEPLOYMENT-worker-deployment
-        fi
+    # - name: Get the GKE credentials so we can deploy to the cluster
+    #   uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+    #   with:
+    #     cluster_name: ${{ env.PROD_CLUSTER }}
+    #     location: "europe-west1"
+    #     credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
+    #     project_id: ${{ env.PROD_PROJECT }}       
+    # - name: Deploy Production
+    #   run: |-
+    #     kubectl -n production set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+    #     kubectl -n production rollout status deployment/$DEPLOYMENT-server-deployment
+    #     kubectl -n production get services -o wide
+    #     if [[ ${{ inputs.migrations }} == 'true' ]]; then
+    #       kubectl -n production set image cronjob/$DEPLOYMENT-migration
+    #     fi
+    #     if [[ ${{ inputs.workers }} == 'true' ]]; then
+    #       kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment
+    #       kubectl -n production rollout status deployment/$DEPLOYMENT-worker-deployment
+    #     fi
 
     - uses: act10ns/slack@v2
       with:
