@@ -416,53 +416,53 @@ jobs:
      # Deploy the Docker image to the GKE cluster
      # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
      - name: Get the GKE credentials so we can deploy to the cluster
-      uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
-      with:
+       uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+       with:
         cluster_name: ${{ env.SANDBOX_CLUSTER }}
         location: "europe-west1"
         credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
         project_id: ${{ env.SANDBOX_PROJECT }}
-    - name: Deploy Sandbox
-      run: |-
-        kubectl -n sandbox set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-        kubectl -n sandbox rollout status deployment/$DEPLOYMENT-server-deployment
-        kubectl -n sandbox get services -o wide
-        if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n sandbox set image cronjob/$DEPLOYMENT-migration
-        fi
-        if [[ ${{ inputs.workers }} == 'true' ]]; then
-         kubectl -n sandbox set image deployment/$DEPLOYMENT-worker-deployment
-         kubectl -n sandbox rollout status deployment/$DEPLOYMENT-worker-deployment
-        fi
-      if: |
-        contains('
-          refs/heads/master
-        ', github.ref)         
+      - name: Deploy Sandbox
+        run: |-
+          kubectl -n sandbox set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+          kubectl -n sandbox rollout status deployment/$DEPLOYMENT-server-deployment
+          kubectl -n sandbox get services -o wide
+          if [[ ${{ inputs.migrations }} == 'true' ]]; then
+          kubectl -n sandbox set image cronjob/$DEPLOYMENT-migration
+          fi
+          if [[ ${{ inputs.workers }} == 'true' ]]; then
+          kubectl -n sandbox set image deployment/$DEPLOYMENT-worker-deployment
+          kubectl -n sandbox rollout status deployment/$DEPLOYMENT-worker-deployment
+          fi
+        if: |
+          contains('
+            refs/heads/master
+          ', github.ref)         
 
-    - name: Get the GKE credentials so we can deploy to the cluster
-      uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
-      with:
-        cluster_name: ${{ env.PROD_CLUSTER }}
-        location: "europe-west1"
-        credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
-        project_id: ${{ env.PROD_PROJECT }}
-      if: |
-        contains('
-          refs/heads/master
-        ', github.ref)        
-    - name: Deploy Production
-      run: |-
-        kubectl -n production set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-        kubectl -n production rollout status deployment/$DEPLOYMENT-server-deployment
-        kubectl -n production get services -o wide
-        if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n production set image cronjob/$DEPLOYMENT-migration
-        fi
-        if [[ ${{ inputs.workers }} == 'true' ]]; then
-         kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment
-         kubectl -n production rollout status deployment/$DEPLOYMENT-worker-deployment
-        fi
-      if: |
-        contains('
-          refs/heads/master
-        ', github.ref)      
+      - name: Get the GKE credentials so we can deploy to the cluster
+        uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+        with:
+          cluster_name: ${{ env.PROD_CLUSTER }}
+          location: "europe-west1"
+          credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
+          project_id: ${{ env.PROD_PROJECT }}
+        if: |
+          contains('
+            refs/heads/master
+          ', github.ref)        
+      - name: Deploy Production
+        run: |-
+          kubectl -n production set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+          kubectl -n production rollout status deployment/$DEPLOYMENT-server-deployment
+          kubectl -n production get services -o wide
+          if [[ ${{ inputs.migrations }} == 'true' ]]; then
+          kubectl -n production set image cronjob/$DEPLOYMENT-migration
+          fi
+          if [[ ${{ inputs.workers }} == 'true' ]]; then
+          kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment
+          kubectl -n production rollout status deployment/$DEPLOYMENT-worker-deployment
+          fi
+        if: |
+          contains('
+            refs/heads/master
+          ', github.ref)      
