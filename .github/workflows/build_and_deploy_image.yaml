@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: develop
     steps:
-    - uses: act10ns/slack@v1
+    - uses: act10ns/slack@v2
       with:
         status: starting
         config: .github/config/slack.yaml
@@ -144,7 +144,7 @@ jobs:
          kubectl -n test rollout status deployment/$DEPLOYMENT-worker-deployment
         fi                      
     
-    - uses: act10ns/slack@v1
+    - uses: act10ns/slack@v2
       with:
         status: ${{ job.status }}
         config: .github/config/slack.yaml
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-    - uses: act10ns/slack@v1
+    - uses: act10ns/slack@v2
       with:
         status: starting
         config: .github/config/slack.yaml
@@ -237,7 +237,7 @@ jobs:
          kubectl -n staging rollout status deployment/$DEPLOYMENT-worker-deployment
         fi                      
     
-    - uses: act10ns/slack@v1
+    - uses: act10ns/slack@v2
       with:
         status: ${{ job.status }}
         config: .github/config/slack.yaml
@@ -248,7 +248,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-    - uses: act10ns/slack@v1
+    - uses: act10ns/slack@v2
       with:
         status: starting
         config: .github/config/slack.yaml
@@ -349,3 +349,9 @@ jobs:
           kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment
           kubectl -n production rollout status deployment/$DEPLOYMENT-worker-deployment
         fi
+
+    - uses: act10ns/slack@v2
+      with:
+        status: ${{ job.status }}
+        config: .github/config/slack.yaml
+      if: always()
