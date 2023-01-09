@@ -191,7 +191,6 @@ jobs:
         config: .github/config/slack.yaml
       if: always()
 
-jobs:
   setup-build-publish-deploy-staging:
     runs-on: ubuntu-latest
     environment: staging
@@ -320,7 +319,6 @@ jobs:
         config: .github/config/slack.yaml
       if: always()
 
-jobs:
   setup-build-publish-deploy-release:
     runs-on: ubuntu-latest
     environment: production
