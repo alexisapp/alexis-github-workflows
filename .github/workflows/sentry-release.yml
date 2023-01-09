@@ -1,0 +1,64 @@
+name: Sentry Release
+
+# on:
+#   push:
+#     branches:
+#       - develop
+#       - master
+#   create:
+#     tags:
+#        - '**'
+on:
+  workflow_call:
+
+jobs:
+  sentry-release:
+    runs-on: ubuntu-latest
+    # env:
+    #   SENTRY_PROJECT: alexis-salary-review
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set npm token
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "16"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set Variables
+        run: |-
+          if [[ ${{ github.ref }} == 'refs/heads/master' ]]; then
+            echo  "GITHUB_REF_NAME=staging" >> $GITHUB_ENV       
+          else
+            echo "GITHUB_REF_NAME=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
+          fi
+          echo "SENTRY_PROJECT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+
+      - name: Set npm@8.5.5
+        run: npm i --location=global npm@8.5.5
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Create Sentry release
+        uses: lasalefamine/action-release@v1.2.1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_URL: ${{ secrets.SENTRY_URL }}
+        with:
+          environment: ${{ env.GITHUB_REF_NAME }}
+          sourcemaps: "./dist"
+          set_commits: skip
+          version: ${{ github.sha }}
+
+      - uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: failure()          
