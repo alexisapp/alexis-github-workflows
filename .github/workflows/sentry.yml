@@ -1,6 +1,5 @@
 name: Sentry Release
 
-git
 on:
   workflow_call:
 
