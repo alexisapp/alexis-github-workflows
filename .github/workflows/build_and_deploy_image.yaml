@@ -37,7 +37,7 @@ env:
 
 jobs:
   setup-build-publish-deploy-develop:
-    if: contains(github.ref, 'refs/heads/develop')
+    if: contains(github.ref, 'refs/heads/PE-5')
     runs-on: ubuntu-latest
     environment: develop
     steps:
