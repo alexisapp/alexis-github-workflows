@@ -11,6 +11,8 @@ on:
           required: false
           description: "migrations"
           default: 'false'
+          type: string
+
 
 env:
   NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
