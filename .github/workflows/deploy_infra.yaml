@@ -1,0 +1,105 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+  create:
+    tags:
+       - '**'
+
+env:
+  NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  ORGANIZATION: alexisapp
+  DEV_CLUSTER: dev-cluster-200fb4f
+  TEST_CLUSTER: test-cluster-3ffdd90
+  DEV_PROJECT: alexishr-dev-293211
+  TEST_PROJECT: alexishr-test-300014
+  PROD_CLUSTER: app-cluster-8b520e4
+  PROD_PROJECT: alexishr-infra
+  SANDBOX_CLUSTER: sandbox-cluster-bc4e85d
+  SANDBOX_PROJECT: alexishr-sandbox
+  STAGING_CLUSTER: staging-cluster-80833fd
+  STAGING_PROJECT: alexishr-staging-296019     
+
+jobs:
+  develop-preview:
+    if: contains(github.ref, 'refs/heads/develop')
+    environment: develop
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth' 📦️
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          command: preview
+          stack-name: alexisapp/dev
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+  develop-up:
+    needs: develop-preview
+    if: contains(github.ref, 'refs/heads/develop')
+    environment: develop
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth' 📦️
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          command: up
+          stack-name: alexisapp/dev
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+         
