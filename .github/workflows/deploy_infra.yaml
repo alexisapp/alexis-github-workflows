@@ -82,8 +82,8 @@ jobs:
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
   
-      - id: 'auth' 📦️
-        name: 'Authenticate to Google Cloud'
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
