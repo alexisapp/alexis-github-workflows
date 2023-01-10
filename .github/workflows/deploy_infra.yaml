@@ -1,13 +1,7 @@
 name: Deploy
 
 on:
-  push:
-    branches:
-      - develop
-      - master
-  create:
-    tags:
-       - '**'
+  workflow_call:
 
 env:
   NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
