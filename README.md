@@ -1,4 +1,4 @@
-# gitgub-workflows
+# github-workflows
 Reusable Workflows
 
 Сopy this code to workflow.yml in the repository calling workflow
