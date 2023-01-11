@@ -94,13 +94,12 @@ jobs:
         docker push $IMAGE_ID:develop      
 
     - name: Notify Humanitec
-      uses: humanitec/build-push-to-humanitec@v1
-      with:
-        humanitec-token: ${{ secrets.HUMANITEC_TOKEN }}
-        organization: alexishr
-        ref: ${GITHUB_REF}
-        tag: $GITHUB_SHA
-        external-registry-url: eu.gcr.io/alexishr-images/${IMAGE}              
+      run: |
+        curl \
+        -X POST \
+        -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
+        -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
+        "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"            
 
      # Deploy the Docker image to the GKE cluster
      # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
@@ -209,13 +208,12 @@ jobs:
         docker push $IMAGE_ID:master      
 
     - name: Notify Humanitec
-      uses: humanitec/build-push-to-humanitec@v1
-      with:
-        humanitec-token: ${{ secrets.HUMANITEC_TOKEN }}
-        organization: alexishr
-        ref: ${GITHUB_REF}
-        tag: $GITHUB_SHA
-        external-registry-url: eu.gcr.io/alexishr-images/${IMAGE}             
+      run: |
+        curl \
+        -X POST \
+        -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
+        -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
+        "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"           
 
      # Deploy the Docker image to the GKE cluster
      # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
@@ -302,22 +300,13 @@ jobs:
         docker push $IMAGE_ID:$GITHUB_SHA
         docker push $IMAGE_ID:master       
 
-    # - name: Notify Humanitec
-    #   run: |
-    #     curl \
-    #     -X POST \
-    #     -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
-    #     -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
-    #     "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"
-
     - name: Notify Humanitec
-      uses: humanitec/build-push-to-humanitec@v1
-      with:
-        humanitec-token: ${{ secrets.HUMANITEC_TOKEN }}
-        organization: alexishr
-        ref: ${GITHUB_REF}
-        tag: $GITHUB_SHA
-        external-registry-url: eu.gcr.io/alexishr-images/${IMAGE}
+      run: |
+        curl \
+        -X POST \
+        -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
+        -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
+        "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"
 
      # Deploy the Docker image to the GKE cluster
      # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
