@@ -310,10 +310,10 @@ jobs:
 
     - name: Notify Humanitec
       uses: humanitec/build-push-to-humanitec@v1
-        with:
-          humanitec-token: ${{ secrets.HUMANITEC_TOKEN }}
-          organization: alexishr
-          ref: ${GITHUB_REF}
+      with:
+        humanitec-token: ${{ secrets.HUMANITEC_TOKEN }}
+        organization: alexishr
+        ref: ${GITHUB_REF}
 
      # Deploy the Docker image to the GKE cluster
      # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
