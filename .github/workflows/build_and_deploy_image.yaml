@@ -52,7 +52,8 @@ jobs:
     # It could be hardcoded in ENV
     - name: Set Variables
       run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV   
+         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
+         echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
@@ -102,7 +103,7 @@ jobs:
         curl \
         -X POST \
         -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
-        -d '{"branch":"'"master"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
+        -d '{"branch":"'"mastergit "'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
         "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"            
 
      # Deploy the Docker image to the GKE cluster
@@ -116,15 +117,15 @@ jobs:
         project_id: ${{ env.DEV_PROJECT }}       
     - name: Deploy Dev
       run: |-
-        kubectl -n dev set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+        kubectl -n dev set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         kubectl -n dev rollout status deployment/$DEPLOYMENT-server-deployment
         kubectl -n dev get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n dev set image cronjob/$DEPLOYMENT-migration
+         kubectl -n dev set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
-         kubectl -n dev set image deployment/$DEPLOYMENT-worker-deployment
-         kubectl -n dev rollout status deployment/$DEPLOYMENT-worker-deployment
+         kubectl -n dev set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n dev rollout status deployment/$DEPLOYMENT-worker-deployment 
         fi        
 
     - name: Get the GKE credentials so we can deploy to the cluster
@@ -137,14 +138,14 @@ jobs:
     - name: Deploy Test
       run: |-
         kubectl -n test get po
-        kubectl -n test set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+        kubectl -n test set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         kubectl -n test rollout status deployment/$DEPLOYMENT-server-deployment
         kubectl -n test get services -o wide 
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n test set image cronjob/$DEPLOYMENT-migration $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n test set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
-         kubectl -n test set image deployment/$DEPLOYMENT-worker-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n test set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
          kubectl -n test rollout status deployment/$DEPLOYMENT-worker-deployment
         fi                      
     
@@ -170,7 +171,8 @@ jobs:
     # It could be hardcoded in ENV
     - name: Set Variables
       run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY )" >> $GITHUB_ENV 
+         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
+         echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
@@ -234,14 +236,14 @@ jobs:
         project_id: ${{ env.STAGING_PROJECT }}       
     - name: Deploy Staging
       run: |-
-        kubectl -n staging set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+        kubectl -n staging set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         kubectl -n staging rollout status deployment/$DEPLOYMENT-server-deployment
         kubectl -n staging get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n staging set image cronjob/$DEPLOYMENT-migration $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n staging set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
-         kubectl -n staging set image deployment/$DEPLOYMENT-worker-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n staging set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
          kubectl -n staging rollout status deployment/$DEPLOYMENT-worker-deployment
         fi                      
     
@@ -267,7 +269,8 @@ jobs:
     # It could be hardcoded in ENV
     - name: Set Variables
       run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY )" >> $GITHUB_ENV   
+         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
+         echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV  
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
@@ -331,14 +334,14 @@ jobs:
         project_id: ${{ env.SANDBOX_PROJECT }}
     - name: Deploy Sandbox
       run: |-
-        kubectl -n sandbox set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+        kubectl -n sandbox set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         kubectl -n sandbox rollout status deployment/$DEPLOYMENT-server-deployment
         kubectl -n sandbox get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
-          kubectl -n sandbox set image cronjob/$DEPLOYMENT-migration
+          kubectl -n sandbox set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then 
-          kubectl -n sandbox set image deployment/$DEPLOYMENT-worker-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+          kubectl -n sandbox set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
           kubectl -n sandbox rollout status deployment/$DEPLOYMENT-worker-deployment
         fi         
 
@@ -351,14 +354,14 @@ jobs:
         project_id: ${{ env.PROD_PROJECT }}       
     - name: Deploy Production
       run: |-
-        kubectl -n production set image deployment/$DEPLOYMENT-server-deployment $IMAGE="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+        kubectl -n production set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         kubectl -n production rollout status deployment/$DEPLOYMENT-server-deployment
         kubectl -n production get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
-          kubectl -n production set image cronjob/$DEPLOYMENT-migration
+          kubectl -n production set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
-          kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment
+          kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
           kubectl -n production rollout status deployment/$DEPLOYMENT-worker-deployment
         fi
 
