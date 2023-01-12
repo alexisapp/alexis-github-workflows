@@ -52,7 +52,7 @@ jobs:
     # It could be hardcoded in ENV
     - name: Set Variables
       run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY )" >> $GITHUB_ENV   
+         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV   
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
@@ -102,7 +102,7 @@ jobs:
         curl \
         -X POST \
         -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
-        -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
+        -d '{"branch":"'"master"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
         "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"            
 
      # Deploy the Docker image to the GKE cluster
