@@ -52,7 +52,7 @@ jobs:
     # It could be hardcoded in ENV
     - name: Set Variables
       run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV   
+         echo "IMAGE=$( echo $GITHUB_REPOSITORY )" >> $GITHUB_ENV   
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
@@ -91,7 +91,11 @@ jobs:
         echo IMAGE_ID=$IMAGE_ID
         docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:develop
         docker push $IMAGE_ID:$GITHUB_SHA
-        docker push $IMAGE_ID:develop      
+        docker push $IMAGE_ID:develop 
+
+    - name: Publish commit (GCR)
+      run: |-
+        docker push "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"            
 
     - name: Notify Humanitec
       run: |
@@ -166,7 +170,7 @@ jobs:
     # It could be hardcoded in ENV
     - name: Set Variables
       run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV   
+         echo "IMAGE=$( echo $GITHUB_REPOSITORY )" >> $GITHUB_ENV 
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
@@ -205,7 +209,11 @@ jobs:
         echo IMAGE_ID=$IMAGE_ID
         docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:master
         docker push $IMAGE_ID:$GITHUB_SHA
-        docker push $IMAGE_ID:master      
+        docker push $IMAGE_ID:master
+   
+    - name: Publish commit (GCR)
+      run: |-
+        docker push "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
 
     - name: Notify Humanitec
       run: |
@@ -259,7 +267,7 @@ jobs:
     # It could be hardcoded in ENV
     - name: Set Variables
       run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV   
+         echo "IMAGE=$( echo $GITHUB_REPOSITORY )" >> $GITHUB_ENV   
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
@@ -298,7 +306,11 @@ jobs:
         echo IMAGE_ID=$IMAGE_ID
         docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:master
         docker push $IMAGE_ID:$GITHUB_SHA
-        docker push $IMAGE_ID:master       
+        docker push $IMAGE_ID:master
+
+    - name: Publish commit (GCR)
+      run: |-
+        docker push "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"           
 
     - name: Notify Humanitec
       run: |
