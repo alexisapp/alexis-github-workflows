@@ -17,7 +17,13 @@ on:
           required: false
           description: "cronjobs"
           default: 'false'
-          type: string                    
+          type: string
+        dockerfile_name:
+          required: false
+          description: "dockerfile name"
+          default: 'prod.Dockerfile'
+          type: string          
+
 
 env:
   NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
@@ -73,7 +79,7 @@ jobs:
     - name: Build 
       run: |-
         docker build \
-          -f prod.Dockerfile \
+          -f ${{ inputs.dockerfile_name }} \
           --tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" \
           --build-arg NPM_AUTH_TOKEN="$NPM_AUTH_TOKEN" \
           --build-arg SENTRY_RELEASE="$GITHUB_SHA" \

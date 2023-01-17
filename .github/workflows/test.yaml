@@ -81,7 +81,7 @@ on:
 
 
 jobs:
-  test:
+  tests:
     runs-on: ${{ inputs.runs-on }} 
     env:
       COMPOSE_FILE: ./docker-compose.yml
