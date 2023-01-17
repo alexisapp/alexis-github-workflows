@@ -89,9 +89,6 @@ on:
           default: 'http://localhost:3000'
           type: string 
                      
-
-
-
 jobs:
   tests:
     runs-on: ${{ inputs.runs-on }} 
@@ -142,6 +139,7 @@ jobs:
         run: npm i -g npm@8.5.5        
 
       - name: Unset prepare
+        if: "${{ inputs.unset_prepare  == 'true' }}"      
         run: npm pkg delete scripts.prepare
 
       - name: Install
