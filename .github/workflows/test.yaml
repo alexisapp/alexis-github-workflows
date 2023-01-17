@@ -8,12 +8,11 @@ on:
           description: "runs-on self-hosted or ubuntu-latest"
           default: 'ubuntu-latest'
           type: string
-        mongodb_url:
+        MONGODB_URI:
           required: false
           description: "MONGODB_URI"
-          default: 'mongodb://localhost:27017/test_'
           type: string
-        id_url:
+        ID_URL:
           required: false
           description: "ID_URL"
           default: 'https://api.alexishr.com/.well-known/jwks.json'
@@ -83,7 +82,7 @@ on:
           description: "PORT"
           default: '3047'
           type: string
-        api_url:
+        API_URL:
           required: false
           description: "API_URL"
           default: 'http://localhost:3000'
@@ -95,8 +94,6 @@ jobs:
     env:
       COMPOSE_FILE: ./docker-compose.yml
       NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-      MONGODB_URI: ${{ inputs.mongodb_url }} 
-      ID_URL: ${{ inputs.id_url }}
 
     steps: 
       - name: Get Actions user id 
