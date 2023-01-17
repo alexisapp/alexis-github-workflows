@@ -130,6 +130,9 @@ jobs:
       - name: Build Dockerfile
         if: "${{ inputs.dockercompose  == 'true' }}" 
         run: docker-compose up -d app
+        with:
+         MONGODB_URI: ${{ inputs.MONGODB_URI }}
+         
 
       - name: Set npm 8.5.5
         if: "${{ inputs.set_npm  == 'true' }}"      
