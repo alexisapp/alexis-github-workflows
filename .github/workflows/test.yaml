@@ -1,0 +1,133 @@
+name: Tests
+
+on:
+  workflow_call:
+     inputs:
+        runs-on:
+          required: false
+          description: "runs-on self-hosted or ubuntu-latest"
+          default: 'ubuntu-latest'
+          type: string
+        mongodb_url:
+          required: false
+          description: "MONGODB_URI"
+          default: 'mongodb://localhost:27017/test_'
+          type: string
+        id_url:
+          required: false
+          description: "ID_URL"
+          default: 'https://api.alexishr.com/.well-known/jwks.json'
+          type: string
+        get_actions_user_id:
+          required: false
+          description: "Get Actions user id"
+          default: 'false'
+          type: string
+        correct_wwnership:
+          required: false
+          description: "Correct Ownership in GITHUB_WORKSPACE directory"
+          default: 'false'
+          type: string 
+        node_version:
+          required: false
+          description: "node version"
+          default: '16'
+          type: string
+        set_npm:
+          required: false
+          description: "Set npm 8.5.5"
+          default: 'true'
+          type: string
+        unset_prepare:
+          required: false
+          description: "Unset prepare"
+          default: 'false'
+          type: string 
+        publish_code_coverage:
+          required: false
+          description: "Run tests & publish code coverage"
+          default: 'true'
+          type: string
+        coverage_files:
+          required: false
+          description: "path to coverage_files"
+          default: './coverage/lcov.info'
+          type: string 
+        coverageLocations:
+          required: false
+          description: "coverage Locations"
+          default: './coverage/lcov.info:lcov'
+          type: string                                                                  
+
+jobs:
+  test:
+    runs-on: ${{ inputs.runs-on }} 
+    env:
+      COMPOSE_FILE: ./docker-compose.yml
+      NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      MONGODB_URI: ${{ inputs.mongodb_url }} 
+      ID_URL: ${{ inputs.id_url }}
+
+    steps: 
+      - name: Get Actions user id 
+        if: ${{ inputs.get_actions_user_id }}  == 'true'
+        id: get_uid
+        run: |
+          actions_user_id=`id -u $USER`
+          echo $actions_user_id
+          echo ::set-output name=uid::$actions_user_id          
+
+      - name: Correct Ownership in GITHUB_WORKSPACE directory
+        if: ${{ inputs.correct_wwnership }}  == 'true'
+        uses: peter-murray/reset-workspace-ownership-action@v1
+        with:
+          user_id: ${{ steps.get_uid.outputs.uid }}
+
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Build Dockerfile
+        run: docker-compose up -d app
+
+      - name: Set npm 8.5.5
+        if: ${{ inputs.set_npm }}  == 'true'      
+        run: npm i -g npm@8.5.5        
+
+      - name: Unset prepare
+        run: npm pkg delete scripts.prepare
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check docker
+        run: docker-compose up -d app
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Run tests & publish code coverage
+        if: ${{ inputs.publish_code_coverage }}  == 'true'
+        uses: paambaati/codeclimate-action@v3.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageCommand: npm run test:cov
+          debug: true
+          coverageLocations: |
+            ${{github.workspace}}${{ inputs.coverageLocations }}
+
+      - name: Upload code coverage to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          directory: ./coverage/
+          files: ${{ inputs.coverage_files }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true        
