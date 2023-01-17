@@ -103,7 +103,7 @@ jobs:
 
     steps: 
       - name: Get Actions user id 
-        if: "${{ github.event.inputs.get_actions_user_id == 'true' }}"
+        if: "${{ inputs.get_actions_user_id == 'true' }}"
         id: get_uid
         run: |
           actions_user_id=`id -u $USER`
@@ -111,7 +111,7 @@ jobs:
           echo ::set-output name=uid::$actions_user_id          
 
       - name: Correct Ownership in GITHUB_WORKSPACE directory
-        if: "${{ github.event.inputs.correct_wwnership  == 'true' }}" 
+        if: "${{ inputs.correct_wwnership  == 'true' }}" 
         uses: peter-murray/reset-workspace-ownership-action@v1
         with:
           user_id: ${{ steps.get_uid.outputs.uid }}
@@ -123,7 +123,7 @@ jobs:
           node-version: ${{ inputs.node_version }}
 
       - uses: actions/cache@v2
-        if: "${{ github.event.inputs.cache  == 'true' }}" 
+        if: "${{ inputs.cache  == 'true' }}" 
         with:
           path: |
             **/node_modules
@@ -138,7 +138,7 @@ jobs:
         run: docker-compose up -d app
 
       - name: Set npm 8.5.5
-        if: "${{ github.event.inputs.set_npm  == 'true' }}"      
+        if: "${{ inputs.set_npm  == 'true' }}"      
         run: npm i -g npm@8.5.5        
 
       - name: Unset prepare
@@ -151,19 +151,19 @@ jobs:
         run: npm run build
 
       - name: Start MongoDB
-        if: "${{ github.event.inputs.mongodb  == 'true' }}"
+        if: "${{ inputs.mongodb  == 'true' }}"
         uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: "4.4"
 
       - name: Wait for Mongo
-        if: "${{ github.event.inputs.mongodb  == 'true' }}"
+        if: "${{ inputs.mongodb  == 'true' }}"
         run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- -t 120 localhost:27017 -- echo "Mongo ready."
         env:
           WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3        
 
       - name: Check docker
-        if: "${{ github.event.inputs.dockercompose  == 'true' }}"
+        if: "${{ inputs.dockercompose  == 'true' }}"
         run: docker-compose up -d app
 
       - name: Run lint
@@ -173,7 +173,7 @@ jobs:
         run: npm run test
 
       - name: Run tests & publish code coverage
-        if: "${{ github.event.inputs.publish_code_coverage  == 'true' }}"
+        if: "${{ inputs.publish_code_coverage  == 'true' }}"
         uses: paambaati/codeclimate-action@v3.0.0
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
@@ -184,7 +184,7 @@ jobs:
             ${{github.workspace}}${{ inputs.coverageLocations }}
 
       - name: Upload code coverage to codecov
-        if: "${{ github.event.inputs.upload_code_coverage  == 'true' }}"
+        if: "${{ inputs.upload_code_coverage  == 'true' }}"
         uses: codecov/codecov-action@v2
         with:
           directory: ./coverage/
