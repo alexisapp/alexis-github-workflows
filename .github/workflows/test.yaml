@@ -134,7 +134,7 @@ jobs:
             ${{ runner.os }}-npm-          
 
       - name: Build Dockerfile
-        if: "${{ github.event.inputs.dockercompose  == 'true' }}" 
+        if: "${{ inputs.dockercompose  == 'true' }}" 
         run: docker-compose up -d app
 
       - name: Set npm 8.5.5
