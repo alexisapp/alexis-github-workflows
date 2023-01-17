@@ -1,6 +1,8 @@
 name: Build and Deploy to GKE (Develop)
 
 on:
+  workflow_success:
+    workflow: Tests 
   workflow_call:
       inputs:
         migrations:
@@ -43,7 +45,6 @@ env:
 
 jobs:
   setup-build-publish-deploy-develop:
-    needs: test
     if: contains(github.ref, 'refs/heads/develop')
     runs-on: ubuntu-latest
     environment: develop
@@ -163,7 +164,6 @@ jobs:
       if: always()
 
   setup-build-publish-deploy-staging:
-    needs: test
     if: contains(github.ref, 'refs/heads/master')
     runs-on: ubuntu-latest
     environment: staging
@@ -262,7 +262,6 @@ jobs:
       if: always()
 
   setup-build-publish-deploy-release:
-    needs: test
     if: contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     environment: production
