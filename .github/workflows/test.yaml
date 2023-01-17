@@ -57,7 +57,23 @@ on:
           required: false
           description: "coverage Locations"
           default: './coverage/lcov.info:lcov'
-          type: string                                                                  
+          type: string
+        cache:
+          required: false
+          description: "actions/cache@v2"
+          default: 'false'
+          type: string
+        dockercompose:
+          required: false
+          description: "use docker-compose"
+          default: 'false'
+          type: string
+        mongodb:
+          required: false
+          description: "use mongodb"
+          default: 'false'
+          type: string                     
+
 
 jobs:
   test:
@@ -84,11 +100,24 @@ jobs:
           user_id: ${{ steps.get_uid.outputs.uid }}
 
       - uses: actions/checkout@v2
+
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ inputs.node_version }}
 
+      - uses: actions/cache@v2
+        if: ${{ inputs.cache }}  == 'true'      
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+            ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-          
+
       - name: Build Dockerfile
+        if: ${{ inputs.dockercompose }}  == 'true' 
         run: docker-compose up -d app
 
       - name: Set npm 8.5.5
@@ -104,7 +133,20 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Start MongoDB
+        if: ${{ inputs.mongodb }}  == 'true'
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: "4.4"
+
+      - name: Wait for Mongo
+        if: ${{ inputs.mongodb }}  == 'true'
+        run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- -t 120 localhost:27017 -- echo "Mongo ready."
+        env:
+          WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3        
+
       - name: Check docker
+        if: ${{ inputs.dockercompose }}  == 'true' 
         run: docker-compose up -d app
 
       - name: Run lint
@@ -130,4 +172,10 @@ jobs:
           directory: ./coverage/
           files: ${{ inputs.coverage_files }}
           token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true        
+          verbose: true
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: failure()             
