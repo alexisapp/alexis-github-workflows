@@ -72,7 +72,12 @@ on:
           required: false
           description: "use mongodb"
           default: 'false'
-          type: string                     
+          type: string        
+        upload_code_coverage:
+          required: false
+          description: "Upload code coverage"
+          default: 'false'
+          type: string                              
 
 
 jobs:
@@ -167,6 +172,7 @@ jobs:
             ${{github.workspace}}${{ inputs.coverageLocations }}
 
       - name: Upload code coverage to codecov
+        if: ${{ inputs.upload_code_coverage }}  == 'true'
         uses: codecov/codecov-action@v2
         with:
           directory: ./coverage/
