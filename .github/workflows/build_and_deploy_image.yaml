@@ -1,8 +1,9 @@
 name: Build and Deploy to GKE (Develop)
 
 on:
-  workflow_success:
-    workflow: Tests 
+  workflow_complete:
+workflow: Test
+    types: [success]
   workflow_call:
       inputs:
         migrations:
