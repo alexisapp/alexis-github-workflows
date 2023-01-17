@@ -130,7 +130,7 @@ jobs:
       - name: Build Dockerfile
         if: "${{ inputs.dockercompose  == 'true' }}" 
         run: docker-compose up -d app
-        with:
+        env:
          MONGODB_URI: ${{ inputs.MONGODB_URI }}
          
 
@@ -169,7 +169,7 @@ jobs:
 
       - name: Run tests
         run: npm run test
-        with:
+        env:
          MONGODB_URI: ${{ inputs.MONGODB_URI }}        
 
       - name: Run tests & publish code coverage
