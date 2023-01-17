@@ -169,6 +169,8 @@ jobs:
 
       - name: Run tests
         run: npm run test
+        with:
+         MONGODB_URI: ${{ inputs.MONGODB_URI }}        
 
       - name: Run tests & publish code coverage
         if: "${{ inputs.publish_code_coverage  == 'true' }}"
