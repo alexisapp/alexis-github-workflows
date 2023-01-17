@@ -27,13 +27,17 @@ jobs:
           echo "SENTRY_PROJECT=alexis-$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
 
       - name: Set npm@8.5.5
-        run: npm i --location=global npm@8.5.5
+        run: npm i --location=global npm@8.5.5     
 
       - name: Install
         run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
       - name: Build
         run: npm run build
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}        
 
       - name: Create Sentry release
         uses: lasalefamine/action-release@v1.2.1
