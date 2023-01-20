@@ -132,8 +132,8 @@ jobs:
          kubectl -n dev create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
-         kubectl -n dev set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-         kubectl -n dev rollout status deployment/$DEPLOYMENT-worker-deployment 
+          kubectl -n dev set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" && kubectl -n dev rollout status deployment/$DEPLOYMENT-worker-deployment || \
+          kubectl -n dev set image deployment/$DEPLOYMENT-main-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" && kubectl -n dev rollout status deployment/$DEPLOYMENT-main-worker-deploymentt 
         fi        
 
     - name: Get the GKE credentials so we can deploy to the cluster
@@ -354,8 +354,8 @@ jobs:
           kubectl -n sandbox create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then 
-          kubectl -n sandbox set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-          kubectl -n sandbox rollout status deployment/$DEPLOYMENT-worker-deployment
+          kubectl -n sandbox set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" && kubectl -n sandbox rollout status deployment/$DEPLOYMENT-worker-deployment || \
+          kubectl -n sandbox set image deployment/$DEPLOYMENT-main-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" && kubectl -n sandbox rollout status deployment/$DEPLOYMENT-main-worker-deployment
         fi         
 
     - name: Get the GKE credentials so we can deploy to the cluster
@@ -375,7 +375,7 @@ jobs:
           kubectl -n production create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
-          kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+          kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" 
           kubectl -n production rollout status deployment/$DEPLOYMENT-worker-deployment
         fi
 
