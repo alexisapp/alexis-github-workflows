@@ -8,15 +8,44 @@ on:
           description: "runs-on self-hosted or ubuntu-latest"
           default: 'ubuntu-latest'
           type: string
+######## Variables ########
         MONGODB_URI:
           required: false
           description: "MONGODB_URI"
+          type: string          
+        MONGODB_DBNAME:
+          required: false
+          description: "MONGODB_DBNAME"
+          type: string
+        ENVIRONMENT:
+          required: false
+          description: "ENVIRONMENT"
           type: string
         ID_URL:
           required: false
           description: "ID_URL"
           default: 'https://api.alexishr.com/.well-known/jwks.json'
           type: string
+        PORT:
+          required: false
+          description: "PORT"
+          type: string
+        API_URL:
+          required: false
+          description: "API_URL"
+          default: 'http://localhost:3000'
+          type: string 
+        FILES_URL:
+          required: false
+          description: "FILES_URL"
+          default: 'http://localhost:3030'
+          type: string
+########   END Variables  ########  
+        npm_tests:
+          required: false
+          description: "npm tests"
+          default: 'true'
+          type: string                  
         get_actions_user_id:
           required: false
           description: "Get Actions user id"
@@ -67,6 +96,11 @@ on:
           description: "use docker-compose"
           default: 'false'
           type: string
+        dockercompose_wth_tests:
+          required: false
+          description: "use docker-compose with tests"
+          default: 'false'
+          type: string          
         mongodb:
           required: false
           description: "use mongodb"
@@ -77,16 +111,6 @@ on:
           description: "Upload code coverage"
           default: 'false'
           type: string       
-        port:
-          required: false
-          description: "PORT"
-          default: '3047'
-          type: string
-        API_URL:
-          required: false
-          description: "API_URL"
-          default: 'http://localhost:3000'
-          type: string 
         run_test_server:
           required: false
           description: "run_test_server"
@@ -96,23 +120,7 @@ on:
           required: false
           description: "run test:e2e"
           default: 'false'
-          type: string
-        FILES_URL:
-          required: false
-          description: "FILES_URL"
-          default: 'http://localhost:3030'
-          type: string
-        MONGODB_DBNAME:
-          required: false
-          description: "MONGODB_DBNAME"
-          default: 'alexis_db'
-          type: string
-        ENVIRONMENT:
-          required: false
-          description: "ENVIRONMENT"
-          default: 'local'
-          type: string                             
-                  
+          type: string                  
                      
 jobs:
   tests:
@@ -179,9 +187,11 @@ jobs:
         uses: bahmutov/npm-install@v1.6.0        
 
       - name: Install
+        if: "${{ inputs.npm_tests  == 'true' }}"  
         run: npm ci
 
       - name: Build
+        if: "${{ inputs.npm_tests  == 'true' }}"       
         run: npm run build
 
       - name: Start MongoDB
@@ -201,10 +211,35 @@ jobs:
         run: docker-compose up -d app
 
       - name: Run lint
+        if: "${{ inputs.npm_tests  == 'true' }}"       
         run: npm run lint
 
       - name: Run tests
-        run: npm run test     
+        if: "${{ inputs.npm_tests  == 'true' }}"      
+        run: npm run test
+#### docker-compose with tests ######
+
+      - name: Build Dockerfile with tests
+        if: "${{ inputs.dockercompose_wth_tests  == 'true' }}"
+        run: docker-compose up -d app
+
+      - name: Install docker-compose with tests
+        if: "${{ inputs.dockercompose_wth_tests  == 'true' }}"
+        run: docker-compose run -T app npm ci
+
+      - name: Build docker-compose with tests
+        if: "${{ inputs.dockercompose_wth_tests  == 'true' }}"
+        run: docker-compose run -T app npm run build
+
+      - name: Run lint docker-compose with tests
+        if: "${{ inputs.dockercompose_wth_tests  == 'true' }}"      
+        run: docker-compose run -T app npm run lint
+
+      - name: Run tests docker-compose with tests
+        if: "${{ inputs.dockercompose_wth_tests  == 'true' }}"
+        run: docker-compose run -T app npm test
+
+####  END docker-compose with tests ######        
 
       - name: Run tests & publish code coverage
         if: "${{ inputs.publish_code_coverage  == 'true' }}"
