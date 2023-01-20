@@ -106,7 +106,12 @@ on:
           required: false
           description: "MONGODB_DBNAME"
           default: 'alexis_db'
-          type: string                   
+          type: string
+        ENVIRONMENT:
+          required: false
+          description: "ENVIRONMENT"
+          default: 'local'
+          type: string                             
                   
                      
 jobs:
