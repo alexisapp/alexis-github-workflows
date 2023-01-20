@@ -7,7 +7,12 @@ on:
           required: false
           description: "WORKER_NAME"
           default: 'worker'
-          type: string      
+          type: string
+        WORKER_CONATINER_NAME:
+          required: false
+          description: "WORKER_CONATINER_NAME"
+          default: 'worker'
+          type: string             
         migrations:
           required: false
           description: "migrations"
@@ -137,7 +142,7 @@ jobs:
          kubectl -n dev create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
-          kubectl -n dev set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" 
+          kubectl -n dev set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" || kubectl -n dev set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment ${{ inputs.WORKER_CONATINER_NAME }}="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
           kubectl -n dev rollout status deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment
         fi        
 
