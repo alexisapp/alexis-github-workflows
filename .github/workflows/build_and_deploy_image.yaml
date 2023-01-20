@@ -61,6 +61,7 @@ jobs:
          echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
          echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+         echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
          echo ${{ inputs.cronjobs }}
@@ -128,6 +129,7 @@ jobs:
         kubectl -n dev get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
          kubectl -n dev set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n dev create job --from=cronjob/$DEPLOYMENT $DEPLOYMENT-migration-${{ steps.vars.outputs.sha_short }}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
          kubectl -n dev set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
@@ -149,6 +151,7 @@ jobs:
         kubectl -n test get services -o wide 
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
          kubectl -n test set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n test create job --from=cronjob/$DEPLOYMENT $DEPLOYMENT-migration-${{ steps.vars.outputs.sha_short }}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
          kubectl -n test set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
@@ -180,6 +183,7 @@ jobs:
          echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
          echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+         echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
          echo ${{ inputs.cronjobs }}
@@ -247,6 +251,7 @@ jobs:
         kubectl -n staging get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
          kubectl -n staging set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+         kubectl -n staging create job --from=cronjob/$DEPLOYMENT $DEPLOYMENT-migration-${{ steps.vars.outputs.sha_short }}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
          kubectl -n staging set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
@@ -278,6 +283,7 @@ jobs:
          echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
          echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV  
          echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+         echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
          echo ${{ inputs.migrations }}
          echo ${{ inputs.workers }}
          echo ${{ inputs.cronjobs }}  
@@ -345,6 +351,7 @@ jobs:
         kubectl -n sandbox get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
           kubectl -n sandbox set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+          kubectl -n sandbox create job --from=cronjob/$DEPLOYMENT $DEPLOYMENT-migration-${{ steps.vars.outputs.sha_short }}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then 
           kubectl -n sandbox set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
@@ -365,6 +372,7 @@ jobs:
         kubectl -n production get services -o wide
         if [[ ${{ inputs.migrations }} == 'true' ]]; then
           kubectl -n production set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+          kubectl -n production create job --from=cronjob/$DEPLOYMENT $DEPLOYMENT-migration-${{ steps.vars.outputs.sha_short }}
         fi
         if [[ ${{ inputs.workers }} == 'true' ]]; then
           kubectl -n production set image deployment/$DEPLOYMENT-worker-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
