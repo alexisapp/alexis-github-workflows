@@ -87,6 +87,27 @@ on:
           description: "API_URL"
           default: 'http://localhost:3000'
           type: string 
+        run_test_server:
+          required: false
+          description: "run_test_server"
+          default: 'false'
+          type: string             
+        run_test_e2e:
+          required: false
+          description: "run test:e2e"
+          default: 'false'
+          type: string
+        FILES_URL:
+          required: false
+          description: "FILES_URL"
+          default: 'http://localhost:3030'
+          type: string
+        MONGODB_DBNAME:
+          required: false
+          description: "MONGODB_DBNAME"
+          default: 'alexis_db'
+          type: string                   
+                  
                      
 jobs:
   tests:
@@ -94,6 +115,12 @@ jobs:
     env:
       COMPOSE_FILE: ./docker-compose.yml
       NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      MONGODB_URI: ${{ inputs.MONGODB_URI }}
+      MONGODB_DBNAME: ${{ inputs.MONGODB_DBNAME }}
+      ID_URL: ${{ inputs.ID_URL }}
+      API_URL: ${{ inputs.API_URL }}
+      FILES_URL: ${{ inputs.FILES_URL }}
+      ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
 
     steps: 
       - name: Get Actions user id 
@@ -130,10 +157,7 @@ jobs:
       - name: Build Dockerfile
         if: "${{ inputs.dockercompose  == 'true' }}" 
         run: docker-compose up -d app
-        env:
-         MONGODB_URI: ${{ inputs.MONGODB_URI }}
          
-
       - name: Set npm 8.5.5
         if: "${{ inputs.set_npm  == 'true' }}"      
         run: npm i -g npm@8.5.5        
@@ -168,9 +192,7 @@ jobs:
         run: npm run lint
 
       - name: Run tests
-        run: npm run test
-        env:
-         MONGODB_URI: ${{ inputs.MONGODB_URI }}        
+        run: npm run test     
 
       - name: Run tests & publish code coverage
         if: "${{ inputs.publish_code_coverage  == 'true' }}"
@@ -191,6 +213,14 @@ jobs:
           files: ${{ inputs.coverage_files }}
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
+
+      - name: Run test starting server
+        if: "${{ inputs.run_test_server  == 'true' }}"
+        run: npm run test:server
+
+      - name: Run e2e test
+        if: "${{ inputs.run_test_e2e  == 'true' }}"
+        run: npm run test:e2e          
 
       - uses: act10ns/slack@v2
         with:
