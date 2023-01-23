@@ -148,7 +148,7 @@ jobs:
       ID_URL: ${{ inputs.ID_URL }}
       API_URL: ${{ inputs.API_URL }}
       FILES_URL: ${{ inputs.FILES_URL }}
-      ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+      # ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
       PORT:  ${{ inputs.PORT }}
 
     steps: 
