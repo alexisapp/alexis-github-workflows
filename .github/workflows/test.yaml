@@ -20,6 +20,7 @@ on:
         ENVIRONMENT:
           required: false
           description: "ENVIRONMENT"
+          default: "local"
           type: string
         ID_URL:
           required: false
