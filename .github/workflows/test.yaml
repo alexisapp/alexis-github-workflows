@@ -211,6 +211,10 @@ jobs:
         if: "${{ inputs.npm_pre_tests  == 'true' }}"  
         run: npm ci
 
+      - name: Run lint
+        if: "${{ inputs.npm_pre_tests  == 'true' }}"       
+        run: npm run lint        
+
       - name: Build
         if: "${{ inputs.npm_pre_tests  == 'true' }}"       
         run: npm run build
@@ -230,10 +234,6 @@ jobs:
       - name: Check docker
         if: "${{ inputs.dockercompose  == 'true' }}"
         run: docker-compose up -d app
-
-      - name: Run lint
-        if: "${{ inputs.npm_pre_tests  == 'true' }}"       
-        run: npm run lint
 
       - name: Run tests
         if: "${{ inputs.npm_tests  == 'true' }}"      
