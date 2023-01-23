@@ -61,7 +61,12 @@ on:
           required: false
           description: "Correct Ownership in GITHUB_WORKSPACE directory"
           default: 'false'
-          type: string 
+          type: string
+        npm_install_with_caching:
+          required: false
+          description: "npm_install_with_caching"
+          default: 'true'
+          type: string
         node_version:
           required: false
           description: "node version"
@@ -191,7 +196,7 @@ jobs:
         run: npm pkg delete scripts.prepare
 
       - name: NPM or Yarn install with caching
-        if: "${{ inputs.correct_ownership  == 'false' }}" 
+        if: "${{ inputs.npm_install_with_caching  == 'true' }}" 
         uses: bahmutov/npm-install@v1.6.0        
 
       - name: Install
