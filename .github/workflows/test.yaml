@@ -232,7 +232,7 @@ jobs:
         run: docker-compose up -d app
 
       - name: Run lint
-        if: "${{ inputs.npm_tests  == 'true' }}"       
+        if: "${{ inputs.npm_pre_tests  == 'true' }}"       
         run: npm run lint
 
       - name: Run tests
