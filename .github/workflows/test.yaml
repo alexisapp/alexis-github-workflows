@@ -17,10 +17,11 @@ on:
           required: false
           description: "MONGODB_DBNAME"
           type: string
-        # ENVIRONMENT:
-        #   required: false
-        #   description: "ENVIRONMENT"
-        #   type: string
+        ENVIRONMENT:
+          required: false
+          description: "ENVIRONMENT"
+          default: 'local'
+          type: string
         ID_URL:
           required: false
           description: "ID_URL"
@@ -148,7 +149,6 @@ jobs:
       ID_URL: ${{ inputs.ID_URL }}
       API_URL: ${{ inputs.API_URL }}
       FILES_URL: ${{ inputs.FILES_URL }}
-      # ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
       PORT:  ${{ inputs.PORT }}
 
     steps: 
@@ -288,7 +288,10 @@ jobs:
 
       - name: Run e2e test
         if: "${{ inputs.run_test_e2e  == 'true' }}"
-        run: npm run test:e2e          
+        run: npm run test:e2e
+        env:
+          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+         
 
       - uses: act10ns/slack@v2
         with:
