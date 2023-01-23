@@ -17,10 +17,10 @@ on:
           required: false
           description: "MONGODB_DBNAME"
           type: string
-        ENVIRONMENT:
-          required: false
-          description: "ENVIRONMENT"
-          type: string
+        # ENVIRONMENT:
+        #   required: false
+        #   description: "ENVIRONMENT"
+        #   type: string
         ID_URL:
           required: false
           description: "ID_URL"
