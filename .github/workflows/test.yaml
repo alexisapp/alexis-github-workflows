@@ -77,6 +77,11 @@ on:
           description: "Set npm 8.5.5"
           default: 'true'
           type: string
+        set_npm_global:
+          required: false
+          description: "Set npm 8.5.5"
+          default: 'false'
+          type: string
         unset_prepare:
           required: false
           description: "Unset prepare"
@@ -189,7 +194,11 @@ jobs:
          
       - name: Set npm 8.5.5
         if: "${{ inputs.set_npm  == 'true' }}"      
-        run: npm i -g npm@8.5.5        
+        run: npm i -g npm@8.5.5
+
+      - name: Set npm@8.5.5 global
+        if: "${{ inputs.set_npm_global  == 'true' }}"      
+        run: npm install -location=global npm@8.5.5                
 
       - name: Unset prepare
         if: "${{ inputs.unset_prepare  == 'true' }}"      
