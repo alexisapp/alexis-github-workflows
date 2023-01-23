@@ -51,8 +51,8 @@ jobs:
           set_commits: skip
           version: ${{ github.sha }}
 
-      - uses: act10ns/slack@v1
+      - uses: act10ns/slack@v2
         with:
           status: ${{ job.status }}
           config: .github/config/slack.yaml
-        if: failure()          
+        if: failure()     
