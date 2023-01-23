@@ -30,6 +30,7 @@ on:
         PORT:
           required: false
           description: "PORT"
+          default: "3047"
           type: string
         API_URL:
           required: false
