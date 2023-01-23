@@ -185,6 +185,7 @@ jobs:
         run: npm pkg delete scripts.prepare
 
       - name: NPM or Yarn install with caching
+        if: "${{ inputs.correct_wwnership  == 'false' }}" 
         uses: bahmutov/npm-install@v1.6.0        
 
       - name: Install
