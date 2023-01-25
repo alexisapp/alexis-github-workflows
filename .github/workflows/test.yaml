@@ -42,7 +42,21 @@ on:
           description: "FILES_URL"
           default: 'http://localhost:3030'
           type: string
-########   END Variables  ########
+        CONFIG_SECRET:
+          required: false
+          description: "CONFIG_SECRET"
+          type: string
+        JWT_PUBLIC_KEY_PATH:
+          required: false
+          description: "JWT_PUBLIC_KEY_PATH"
+          default: './config/jwt.key.pub'
+          type: string
+        JWT_PRIVATE_KEY_PATH:
+          required: false
+          description: "JWT_PRIVATE_KEY_PATH"
+          default: './config/jwt.key'
+          type: string                              
+########   END Variables  ########http://localhost:3030
         npm_pre_tests:
           required: false
           description: "npm tests"
@@ -137,8 +151,18 @@ on:
           required: false
           description: "run test:e2e"
           default: 'false'
-          type: string                  
-                     
+          type: string
+        openssl:
+          required: false
+          description: "Install OpenSSL"
+          default: 'false'
+          type: string          
+        jwt_keys:
+          required: false
+          description: " Decrypt JWT Keys"
+          default: 'false'
+          type: string
+
 jobs:
   tests:
     runs-on: ${{ inputs.runs-on }} 
@@ -151,6 +175,9 @@ jobs:
       API_URL: ${{ inputs.API_URL }}
       FILES_URL: ${{ inputs.FILES_URL }}
       PORT:  ${{ inputs.PORT }}
+      CONFIG_SECRET: ${{ inputs.CONFIG_SECRET }}
+      JWT_PUBLIC_KEY_PATH: ${{ inputs.JWT_PUBLIC_KEY_PATH }}
+      JWT_PRIVATE_KEY_PATH: ${{ inputs.JWT_PRIVATE_KEY_PATH }} 
 
     steps: 
       - name: Get Actions user id 
@@ -186,7 +213,19 @@ jobs:
             ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-npm-          
+            ${{ runner.os }}-npm-    
+
+      - name: Install OpenSSL
+        if: "${{ inputs.openssl  == 'true' }}" 
+        run: ./script/install_libressl_linux.sh
+
+      - name: Decrypt JWT Public Key
+        if: "${{ inputs.jwt_keys  == 'true' }}"       
+        run: openssl aes-256-cbc -pass env:CONFIG_SECRET -d -a -in config/jwt.key.pub.enc -out config/jwt.key.pub
+
+      - name: Decrypt JWT Private Key
+        if: "${{ inputs.jwt_keys  == 'true' }}"        
+        run: openssl aes-256-cbc -pass env:CONFIG_SECRET -d -a -in config/jwt.key.enc -out config/jwt.key                  
 
       - name: Build Dockerfile
         if: "${{ inputs.dockercompose  == 'true' }}" 
