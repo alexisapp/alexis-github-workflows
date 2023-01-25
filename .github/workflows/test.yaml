@@ -175,7 +175,7 @@ jobs:
       API_URL: ${{ inputs.API_URL }}
       FILES_URL: ${{ inputs.FILES_URL }}
       PORT:  ${{ inputs.PORT }}
-      CONFIG_SECRET: ${{ inputs.CONFIG_SECRET }}
+      CONFIG_SECRET: ${{ secrets.CONFIG_SECRET }}
       JWT_PUBLIC_KEY_PATH: ${{ inputs.JWT_PUBLIC_KEY_PATH }}
       JWT_PRIVATE_KEY_PATH: ${{ inputs.JWT_PRIVATE_KEY_PATH }} 
 
