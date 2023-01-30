@@ -423,7 +423,7 @@ jobs:
         if: always()                    
 
   release-preview:
-    if: contains(github.ref, 'refs/tags/') ||  github.event_name != 'pull_request'
+    if: contains(github.ref, 'refs/tags/') ||  github.event_name == 'pull_request'
     environment: production
     name: Preview
     runs-on: ubuntu-latest
