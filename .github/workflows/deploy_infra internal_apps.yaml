@@ -1,0 +1,524 @@
+name: Deploy
+
+on:
+  workflow_call:
+
+env:
+  NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  ORGANIZATION: alexisapp
+  DEV_CLUSTER: dev-cluster-200fb4f
+  TEST_CLUSTER: test-cluster-3ffdd90
+  DEV_PROJECT: alexishr-dev-293211
+  TEST_PROJECT: alexishr-test-300014
+  PROD_CLUSTER: app-cluster-8b520e4
+  PROD_PROJECT: alexishr-infra
+  SANDBOX_CLUSTER: sandbox-cluster-bc4e85d
+  SANDBOX_PROJECT: alexishr-sandbox
+  STAGING_CLUSTER: staging-cluster-80833fd
+  STAGING_PROJECT: alexishr-staging-296019     
+
+jobs:
+  develop-preview:
+    if: contains(github.ref, 'refs/heads/develop')
+    environment: develop
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml    
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: preview
+          stack-name: alexisapp/dev
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()          
+
+  develop-up:
+    needs: develop-preview
+    if: contains(github.ref, 'refs/heads/develop')
+    environment: develop
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: up
+          stack-name: alexisapp/dev
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()
+
+  test-preview:
+    if: contains(github.ref, 'refs/heads/test')
+    environment: test
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: preview
+          stack-name: alexisapp/test
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()          
+
+  test-up:
+    needs: test-preview
+    if: contains(github.ref, 'refs/heads/test')
+    environment: test
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: up
+          stack-name: alexisapp/test
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()          
+
+  staging-preview:
+    if: contains(github.ref, 'refs/heads/master')
+    environment: staging
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: preview
+          stack-name: alexisapp/staging
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()          
+
+  staging-up:
+    needs: staging-preview
+    if: contains(github.ref, 'refs/heads/master')
+    environment: staging
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml   
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: up
+          stack-name: alexisapp/staging
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()
+
+  sandbox-preview:
+    if: contains(github.ref, 'refs/heads/sandbox')
+    environment: sandbox
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: preview
+          stack-name: alexisapp/sandbox
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()          
+
+  sandbox-up:
+    needs: sandbox-preview
+    if: contains(github.ref, 'refs/heads/sandbox')
+    environment: sandbox
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml   
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: up
+          stack-name: alexisapp/sandbox
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()                    
+
+  release-preview:
+    if: contains(github.ref, 'refs/tags/') ||  github.event_name == 'pull_request'
+    environment: production
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml 
+
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure (Production) 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: preview
+          stack-name: alexisapp/production
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()                
+
+  release-up:
+    needs: release-preview
+    if: contains(github.ref, 'refs/tags/')
+    environment: production
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml   
+              
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure (Production) 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: up
+          stack-name: alexisapp/production
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()                                      
