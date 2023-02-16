@@ -57,10 +57,17 @@ jobs:
 
       - name: Set Variables
         run: |-
-          if [[ ${{ github.event.pull_request.base.ref }} == 'refs/heads/master' ]]; then
+          if [[ ${{ github.event.pull_request.base.ref }} == 'master' ]]; then
             echo  "ENV_NAME=staging" >> $GITHUB_ENV
-          if [[ ${{ github.event.pull_request.base.ref }} == 'refs/heads/develop' ]]; then
-            echo  "ENV_NAME=dev" >> $GITHUB_ENV         
+          elif  [[ ${{ github.event.pull_request.base.ref }} == 'develop' ]]; then
+            echo  "ENV_NAME=dev" >> $GITHUB_ENV
+          elif  [[ ${{ github.event.pull_request.base.ref }} == 'sandbox' ]]; then
+            echo  "ENV_NAME=sandbox" >> $GITHUB_ENV 
+          elif  [[ ${{ github.event.pull_request.base.ref }} == 'test' ]]; then
+            echo  "ENV_NAME=test" >> $GITHUB_ENV 
+          elif  [[ ${{ github.event.pull_request.base.ref }} == 'production' ]]; then
+            echo  "ENV_NAME=production" >> $GITHUB_ENV                                      
+
 
       - name: Applying infrastructure 🚀
         uses: pulumi/actions@v3
