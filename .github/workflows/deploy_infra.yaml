@@ -19,12 +19,14 @@ env:
   STAGING_PROJECT: alexishr-staging-296019     
 
 jobs:
+
+
   pr-preview:
     if: github.event_name == 'pull_request'
     # environment: develop
     name: Preview
     runs-on: ubuntu-latest
-    steps:
+    steps:    
       - uses: act10ns/slack@v2
         with:
           status: starting
@@ -51,14 +53,21 @@ jobs:
         name: 'Authenticate to Google Cloud 📦️'
         uses: 'google-github-actions/auth@v1'
         with:
-          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
+
+      - name: Set Variables
+        run: |-
+          if [[ ${{ github.event.pull_request.base.ref }} == 'refs/heads/master' ]]; then
+            echo  "ENV_NAME=staging" >> $GITHUB_ENV
+          if [[ ${{ github.event.pull_request.base.ref }} == 'refs/heads/develop' ]]; then
+            echo  "ENV_NAME=dev" >> $GITHUB_ENV         
 
       - name: Applying infrastructure 🚀
         uses: pulumi/actions@v3
         with:
           refresh: true
           command: preview
-          stack-name: alexisapp/github.event.pull_request.base.ref
+          stack-name: alexisapp/${{ env.ENV_NAME }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
