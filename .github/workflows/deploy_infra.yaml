@@ -57,16 +57,17 @@ jobs:
 
       - name: Set Variables
         run: |-
-          if [[ ${{ github.event.pull_request.base.ref }} == 'master' ]]; then
+          if [[ ${{ github.event.pull_request.base.ref }} == master ]]; then
             echo  "ENV_NAME=staging" >> $GITHUB_ENV
-          elif  [[ ${{ github.event.pull_request.base.ref }} == 'develop' ]]; then
+          elif  [[ ${{ github.event.pull_request.base.ref }} == develop ]]; then
             echo  "ENV_NAME=dev" >> $GITHUB_ENV
-          elif  [[ ${{ github.event.pull_request.base.ref }} == 'sandbox' ]]; then
+          elif  [[ ${{ github.event.pull_request.base.ref }} == sandbox ]]; then
             echo  "ENV_NAME=sandbox" >> $GITHUB_ENV 
-          elif  [[ ${{ github.event.pull_request.base.ref }} == 'test' ]]; then
+          elif  [[ ${{ github.event.pull_request.base.ref }} == test ]]; then
             echo  "ENV_NAME=test" >> $GITHUB_ENV 
-          elif  [[ ${{ github.event.pull_request.base.ref }} == 'production' ]]; then
-            echo  "ENV_NAME=production" >> $GITHUB_ENV                                      
+          elif  [[ ${{ github.event.pull_request.base.ref }} == production ]]; then
+            echo  "ENV_NAME=production" >> $GITHUB_ENV
+          fi                                    
 
 
       - name: Applying infrastructure 🚀
