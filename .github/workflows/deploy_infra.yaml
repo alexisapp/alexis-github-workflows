@@ -20,7 +20,7 @@ env:
 
 jobs:
   pr-preview:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'pull_request'
     # environment: develop
     name: Preview
     runs-on: ubuntu-latest
@@ -67,7 +67,7 @@ jobs:
           status: ${{ job.status }}
           config: .github/config/slack.yaml
         if: always()
-        
+
   develop-preview:
     if: contains(github.ref, 'refs/heads/develop')
     environment: develop
