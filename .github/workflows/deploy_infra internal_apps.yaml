@@ -19,6 +19,55 @@ env:
   STAGING_PROJECT: alexishr-staging-296019     
 
 jobs:
+  pr-preview:
+    if: github.event_name != 'pull_request'
+    # environment: develop
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: act10ns/slack@v2
+        with:
+          status: starting
+          config: .github/config/slack.yaml    
+      - uses: actions/checkout@v2
+    
+      - name: Set npm token ✨
+        uses: actions/setup-node@v2
+        with:
+          registry-url: https://registry.npmjs.org
+          node-version: "14"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Set npm@8.5.5 📦️
+        run: npm install -location=global npm@8.5.5
+
+      - name: Install 📦️
+        run: npm install
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+  
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud 📦️'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}      
+
+      - name: Applying infrastructure 🚀
+        uses: pulumi/actions@v3
+        with:
+          refresh: true
+          command: preview
+          stack-name: alexisapp/github.event.pull_request.base.ref
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+      - uses: act10ns/slack@v2
+        with:
+          status: ${{ job.status }}
+          config: .github/config/slack.yaml
+        if: always()     
+
   develop-preview:
     if: contains(github.ref, 'refs/heads/develop')
     environment: develop
