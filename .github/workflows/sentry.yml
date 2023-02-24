@@ -2,6 +2,12 @@ name: Sentry Release
 
 on:
   workflow_call:
+     inputs:
+        outdir:
+          required: false
+          description: "Out dir"
+          default: "./dist"
+          type: string  
 
 jobs:
   sentry-release:
@@ -47,7 +53,7 @@ jobs:
           SENTRY_URL: ${{ secrets.SENTRY_URL }}
         with:
           environment: ${{ env.GITHUB_REF_NAME }}
-          sourcemaps: "./dist"
+          sourcemaps: ${{ inputs.outdir }}
           set_commits: skip
           version: ${{ github.sha }}
 
