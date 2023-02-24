@@ -52,6 +52,43 @@ env:
 
 
 jobs:
+  create-tag:
+    if: contains(github.ref, 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Latest Tag
+        uses: actions/github-script@v4
+        id: latest_tag
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: tags } = await github.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const latestTag = tags[0].name;
+            return {
+              latestTag: latestTag,
+            }
+      - name: Increment Tag
+        uses: actions/core@v2
+        id: increment_tag
+        env:
+          TAG: ${{ steps.latest_tag.outputs.latestTag }}
+        run: |
+          export NEW_TAG=$(echo $TAG | awk -F "." '{printf "%d.%d.%d\n", $1, $2, $3+1}')
+          echo "::set-env name=NEW_TAG::$NEW_TAG"
+      - name: Create New Tag
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_TAG: ${{ env.NEW_TAG }}
+        with:
+          tag_name: ${{ env.NEW_TAG }}
+          release_name: Release ${{ env.NEW_TAG }}
+          draft: false
+          prerelease: false
+
   setup-build-publish-deploy-develop:
     if: contains(github.ref, 'refs/heads/develop')
     runs-on: ubuntu-latest
@@ -175,7 +212,7 @@ jobs:
       if: always()
 
   setup-build-publish-deploy-staging:
-    if: contains(github.ref, 'refs/heads/master')
+    if: contains(github.ref, 'refs/heads/release*')
     runs-on: ubuntu-latest
     environment: staging
     steps:
