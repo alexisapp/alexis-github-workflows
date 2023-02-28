@@ -66,28 +66,24 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            const latestTag = tags[0].name;
+            const latestTag = tags.length > 0 ? tags[0].name : '1.0.0';
+            const tagParts = latestTag.split('.');
+            tagParts[2] = parseInt(tagParts[2]) + 1;
+            const newTag = tagParts.join('.');
             return {
-              latestTag: latestTag,
+              newTag: newTag,
             }
-      - name: Increment Tag
-        uses: actions/core@v2
-        id: increment_tag
-        env:
-          TAG: ${{ steps.latest_tag.outputs.latestTag }}
-      - run: |
-          export NEW_TAG=$(echo $TAG | awk -F "." '{printf "%d.%d.%d\n", $1, $2, $3+1}')
-          echo "::set-env name=NEW_TAG::$NEW_TAG"
       - name: Create New Tag
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEW_TAG: ${{ env.NEW_TAG }}
+          NEW_TAG: ${{ steps.latest_tag.outputs.newTag }}
         with:
-          tag_name: ${{ env.NEW_TAG }}
-          release_name: Release ${{ env.NEW_TAG }}
+          tag_name: ${{ steps.latest_tag.outputs.newTag }}
+          release_name: Release ${{ steps.latest_tag.outputs.newTag }}
           draft: false
           prerelease: false
+          body: This is the release for tag ${{ steps.latest_tag.outputs.newTag }}
 
   setup-build-publish-deploy-develop:
     if: contains(github.ref, 'refs/heads/develop')
