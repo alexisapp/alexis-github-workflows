@@ -76,6 +76,7 @@ jobs:
           git config --global user.name $AUTHOR_EMAIL
           git tag -a $NEW_TAG -m "Tag $NEW_TAG"
           git push origin $NEW_TAG
+
   create_tag_and_release:
     runs-on: ubuntu-latest
     steps:
@@ -96,14 +97,14 @@ jobs:
         with:
           tag: ${{ env.CURRENT_VERSION }}
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN  }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
       - name: Create Git Tag
         if: steps.checkTag.outputs.exists == 'false'
         uses: negz/create-tag@v1
         with:
           version: ${{ env.CURRENT_VERSION }}
-          token: ${{ secrets.MY_GITHUB_TOKEN  }}
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
 
       - name: Create Release
         if: steps.checkTag.outputs.exists == 'false'
@@ -116,11 +117,11 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN  }}      
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  
       - name: Create a Comment
         uses: actions/github-script@0.8.0
         with:
-          github-token: ${{secrets.MY_GITHUB_TOKEN }}
+          github-token: ${{ secrets.MY_GITHUB_TOKEN }}
           script: |
             github.issues.createComment({
               issue_number: context.issue.number,
