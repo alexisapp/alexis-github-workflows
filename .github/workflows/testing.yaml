@@ -69,8 +69,6 @@ jobs:
           echo "Author email: $AUTHOR_EMAIL"        
       - name: Create new tag
         if: steps.latest_tag.outputs.tag == ''
-        env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
         run: |
           export NEW_TAG="1.0.0"
           git config --global user.email $AUTHOR_NAME
