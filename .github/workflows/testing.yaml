@@ -98,6 +98,19 @@ jobs:
         run: |
           TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
           echo "::set-output name=tag::${TAG}"
+      
+      - name: Get Next Tag Semver
+        id: get_next_tag_semver
+        uses: WyriHaximus/github-action-next-semvers@v1
+        with:
+          version: ${{ steps.parse_latest_tag.outputs.tag }}
+
+      - name: Define Current Version
+        run: |
+          CURRENT_VERSION=${{ steps.get_next_tag_semver.outputs.v_minor }}
+          echo $CURRENT_VERSION
+          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
+          
       - name: Ensure Latest Git Tag
         uses: mukunku/tag-exists-action@v1.0.0
         id: checkTag
