@@ -72,14 +72,14 @@ jobs:
         with:
           tag: ${{ env.CURRENT_VERSION }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN  }}
 
       - name: Create Git Tag
         if: steps.checkTag.outputs.exists == 'false'
         uses: negz/create-tag@v1
         with:
           version: ${{ env.CURRENT_VERSION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.MY_GITHUB_TOKEN  }}
 
       - name: Create Release
         if: steps.checkTag.outputs.exists == 'false'
@@ -92,11 +92,11 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN  }}      
       - name: Create a Comment
         uses: actions/github-script@0.8.0
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{secrets.MY_GITHUB_TOKEN }}
           script: |
             github.issues.createComment({
               issue_number: context.issue.number,
