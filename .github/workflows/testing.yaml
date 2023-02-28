@@ -58,81 +58,83 @@ env:
 
 
 jobs:
-  create-tag:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Get latest tag
-        id: latest_tag
-        run: echo "::set-output name=tag::$(git describe --abbrev=0 --tags)"
-      - name: Get commit info
-        run: |
-          AUTHOR_NAME=$(git log -1 --pretty=format:'%an')
-          AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
-          echo "Author name: $AUTHOR_NAME"
-          echo "Author email: $AUTHOR_EMAIL"
-          echo  ${{ env.GITHUB_TOKEN }}
-      - name: Create new tag
-        if: steps.latest_tag.outputs.tag == ''
-        env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-        run: |
-          export NEW_TAG="1.0.0"
-          git config --global user.email $AUTHOR_NAME
-          git config --global user.name $AUTHOR_EMAIL
-          git tag -a $NEW_TAG -m "Tag $NEW_TAG"
-          git push origin $NEW_TAG
-
-  # create_tag_and_release:
+  # create-tag:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout code
   #       uses: actions/checkout@v2
-  #     - name: Get Latest Tag
-  #       id: get_latest_tag
-  #       uses: actions-ecosystem/action-get-latest-tag@v1
-
-  #     - name: Parse Latest Git Tag
-  #       id: parse_latest_tag
+  #     - name: Get latest tag
+  #       id: latest_tag
+  #       run: echo "::set-output name=tag::$(git describe --abbrev=0 --tags)"
+  #     - name: Get commit info
   #       run: |
-  #         TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
-  #         echo "::set-output name=tag::${TAG}"
-  #     - name: Ensure Latest Git Tag
-  #       uses: mukunku/tag-exists-action@v1.0.0
-  #       id: checkTag
-  #       with:
-  #         tag: ${{ env.CURRENT_VERSION }}
+  #         AUTHOR_NAME=$(git log -1 --pretty=format:'%an')
+  #         AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+  #         echo "Author name: $AUTHOR_NAME"
+  #         echo "Author email: $AUTHOR_EMAIL"
+  #         echo  ${{ env.GITHUB_TOKEN }}
+  #     - name: Create new tag
+  #       if: steps.latest_tag.outputs.tag == ''
+  #       env:
+  #         GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+  #       run: |
+  #         export NEW_TAG="1.0.0"
+  #         git config --global user.email $AUTHOR_NAME
+  #         git config --global user.name $AUTHOR_EMAIL
+  #         git tag -a $NEW_TAG -m "Tag $NEW_TAG"
+  #         git push origin $NEW_TAG
+
+  create_tag_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get Latest Tag
+        id: get_latest_tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+
+      - name: Parse Latest Git Tag
+        id: parse_latest_tag
+        run: |
+          TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
+          echo "::set-output name=tag::${TAG}"
+      - name: Ensure Latest Git Tag
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: checkTag
+        with:
+          tag: ${{ env.CURRENT_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}          
 
 
-  #     - name: Create Git Tag
-  #       if: steps.checkTag.outputs.exists == 'false'
-  #       uses: negz/create-tag@v1
-  #       with:
-  #         version: ${{ env.CURRENT_VERSION }}
-  #         token: ${{ secrets.MY_GITHUB_TOKEN }}
+      - name: Create Git Tag
+        if: steps.checkTag.outputs.exists == 'false'
+        uses: negz/create-tag@v1
+        with:
+          version: ${{ env.CURRENT_VERSION }}
+          token:  ${{ env.GITHUB_TOKEN }}
 
-  #     - name: Create Release
-  #       if: steps.checkTag.outputs.exists == 'false'
-  #       uses: actions/create-release@v1
-  #       with:
-  #         tag_name: ${{ env.CURRENT_VERSION }}
-  #         release_name: ${{ env.CURRENT_VERSION }}
-  #         body: |
-  #           ${{ github.event.pull_request.body }}
-  #         draft: false
-  #         prerelease: false
-  #     - name: Create a Comment
-  #       uses: actions/github-script@0.8.0
-  #       with:
-  #         github-token: ${{ secrets.MY_GITHUB_TOKEN }}
-  #         script: |
-  #           github.issues.createComment({
-  #             issue_number: context.issue.number,
-  #             owner: context.repo.owner,
-  #             repo: context.repo.repo,
-  #             body: 'Packages with version [${{ env.CURRENT_VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.CURRENT_VERSION }}) have been released 🎉'
-  #           })              
+      - name: Create Release
+        if: steps.checkTag.outputs.exists == 'false'
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.CURRENT_VERSION }}
+          release_name: ${{ env.CURRENT_VERSION }}
+          body: |
+            ${{ github.event.pull_request.body }}
+          draft: false
+          prerelease: false
+      - name: Create a Comment
+        uses: actions/github-script@0.8.0
+        with:
+          github-token: ${{ env.GITHUB_TOKEN }}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Packages with version [${{ env.CURRENT_VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.CURRENT_VERSION }}) have been released 🎉'
+            })              
 
   # setup-build-publish-deploy-develop:
   #   if: contains(github.ref, 'refs/heads/develop')
