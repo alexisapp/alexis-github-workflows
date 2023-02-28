@@ -110,7 +110,7 @@ jobs:
           CURRENT_VERSION=${{ steps.get_next_tag_semver.outputs.v_minor }}
           echo $CURRENT_VERSION
           echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
-          
+
       - name: Ensure Latest Git Tag
         uses: mukunku/tag-exists-action@v1.0.0
         id: checkTag
@@ -143,7 +143,6 @@ jobs:
           github-token: ${{ env.GITHUB_TOKEN }}
           script: |
             github.issues.createComment({
-              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: 'Packages with version [${{ env.CURRENT_VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.CURRENT_VERSION }}) have been released 🎉'
