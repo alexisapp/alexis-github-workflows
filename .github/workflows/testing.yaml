@@ -33,6 +33,11 @@ on:
           description: "dockerfile name"
           default: 'prod.Dockerfile'
           type: string          
+        github_toekn:
+          required: false
+          description: "gh name"
+          type: string                
+          
 
 
 env:
@@ -49,7 +54,7 @@ env:
   SANDBOX_PROJECT: alexishr-sandbox
   STAGING_CLUSTER: staging-cluster-80833fd
   STAGING_PROJECT: alexishr-staging-296019
-  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+  GITHUB_TOKEN: ${{ inputs.dockerfile_name }}
 
 
 jobs:
@@ -67,7 +72,7 @@ jobs:
           AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
           echo "Author name: $AUTHOR_NAME"
           echo "Author email: $AUTHOR_EMAIL"
-          echo   ${{ secrets.GH_TOKEN }}
+          echo  ${{ inputs.dockerfile_name }}
       - name: Create new tag
         if: steps.latest_tag.outputs.tag == ''
         run: |
