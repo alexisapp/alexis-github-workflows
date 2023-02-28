@@ -59,7 +59,7 @@ env:
 
 jobs:
   create_tag_and_release:
-    if: contains(github.ref, 'refs/heads/release-') 
+    if: contains(github.ref, 'refs/heads/release-.*') 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
