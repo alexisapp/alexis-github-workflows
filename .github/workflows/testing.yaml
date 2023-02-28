@@ -52,38 +52,64 @@ env:
 
 
 jobs:
-  create-tag:
+  create_tag_and_release:
     runs-on: ubuntu-latest
-    if: contains(github.ref, 'refs/heads/master')
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Get Latest Tag
         uses: actions/github-script@v4
-        id: latest_tag
         with:
-          github-token: ${{ secrets.MY_GITHUB_TOKEN  }}
           script: |
             const { data: tags } = await github.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            const latestTag = tags.length > 0 ? tags[0].name : '1.0.0';
-            const tagParts = latestTag.split('.');
-            tagParts[2] = parseInt(tagParts[2]) + 1;
-            const newTag = tagParts.join('.');
+            const latestTag = tags[0] ? tags[0].name : "0.0.0";
             return {
-              newTag: newTag,
+              latestTag: latestTag,
             }
+          github-token: ${{ secrets.MY_GITHUB_TOKEN  }}
+        id: latest_tag
+      - name: Increment Tag
+        id: increment_tag
+        run: |
+          export NEW_TAG=$(echo ${STEP_DATA_LATEST_TAG} | awk -F "." '{printf "%d.%d.%d\n", $1, $2, $3+1}')
+          echo "::set-output name=new_tag::$NEW_TAG"
+        env:
+          STEP_DATA_LATEST_TAG: ${{ steps.latest_tag.outputs.latestTag }}
       - name: Create New Tag
+        uses: actions/github-script@v4
+        with:
+          script: |
+            await github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/" + context.payload.repository.master_branch,
+              sha: context.sha
+            });
+          github-token: ${{ secrets.MY_GITHUB_TOKEN  }}
+        if: ${{ steps.latest_tag.outputs.latestTag == '0.0.0' }}
+      - name: Create New Tag
+        uses: actions/github-script@v4
+        with:
+          script: |
+            await github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/" + '${{ steps.increment_tag.outputs.new_tag }}',
+              sha: context.sha
+            });
+          github-token: ${{ secrets.MY_GITHUB_TOKEN  }}
+        if: ${{ steps.latest_tag.outputs.latestTag != '0.0.0' }}
+      - name: Create Release
         uses: actions/create-release@v1
         env:
-          MY_GITHUB_TOKEN : ${{ secrets.MY_GITHUB_TOKEN  }}
-          NEW_TAG: ${{ steps.latest_tag.outputs.newTag }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN  }}
         with:
-          tag_name: ${{ steps.latest_tag.outputs.newTag }}
-          release_name: Release ${{ steps.latest_tag.outputs.newTag }}
-          draft: false
-          prerelease: false
-          body: This is the release for tag ${{ steps.latest_tag.outputs.newTag }}
+          tag_name: ${{ steps.increment_tag.outputs.new_tag }}
+          release_name: Release ${{ steps.increment_tag.outputs.new_tag }}
+          body: Automated release created by GitHub Actions
 
   setup-build-publish-deploy-develop:
     if: contains(github.ref, 'refs/heads/develop')
