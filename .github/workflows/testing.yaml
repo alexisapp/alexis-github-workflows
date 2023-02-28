@@ -75,7 +75,7 @@ jobs:
         id: increment_tag
         env:
           TAG: ${{ steps.latest_tag.outputs.latestTag }}
-        run: |
+      - run: |
           export NEW_TAG=$(echo $TAG | awk -F "." '{printf "%d.%d.%d\n", $1, $2, $3+1}')
           echo "::set-env name=NEW_TAG::$NEW_TAG"
       - name: Create New Tag
