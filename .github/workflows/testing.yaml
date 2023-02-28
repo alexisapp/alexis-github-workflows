@@ -58,58 +58,68 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Get Latest Tag
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const { data: tags } = await github.repos.listTags({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            const latestTag = tags[0] ? tags[0].name : "0.0.0";
-            return {
-              latestTag: latestTag,
-            }
-          github-token: ${{ secrets.MY_GITHUB_TOKEN  }}
-        id: latest_tag
-      - name: Increment Tag
-        id: increment_tag
+        id: get_latest_tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+
+      - name: Parse Latest Git Tag
+        id: parse_latest_tag
         run: |
-          export NEW_TAG=$(echo ${STEP_DATA_LATEST_TAG} | awk -F "." '{printf "%d.%d.%d\n", $1, $2, $3+1}')
-          echo "::set-output name=new_tag::$NEW_TAG"
+          TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
+          echo "::set-output name=tag::${TAG}"
+
+      - name: Define Current Version
+        run: |
+          echo ${{ env.MREPO_LERNA_STRATEGY }}
+          if [ "${{ env.MREPO_LERNA_STRATEGY }}" = "independent" ]; then
+            CURRENT_VERSION=${{ steps.get_next_tag_semver.outputs.v_minor }}
+            DIST_TAG=$(cat lerna.json | npx jase distTag)
+          else
+            CURRENT_VERSION=$(cat lerna.json | npx jase version)
+            [[ $CURRENT_VERSION =~ "-" ]] && DIST_TAG=$(echo $CURRENT_VERSION | cut -d '-' -f 2 | cut -d '.' -f 1) || DIST_TAG="latest"
+            CURRENT_VERSION=v$CURRENT_VERSION
+          fi
+          echo $CURRENT_VERSION
+          echo $DIST_TAG
+          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
+          echo "DIST_TAG=${DIST_TAG}" >> $GITHUB_ENV
+      - name: Ensure Latest Git Tag
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: checkTag
+        with:
+          tag: ${{ env.CURRENT_VERSION }}
         env:
-          STEP_DATA_LATEST_TAG: ${{ steps.latest_tag.outputs.latestTag }}
-      - name: Create New Tag
-        uses: actions/github-script@v4
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Git Tag
+        if: steps.checkTag.outputs.exists == 'false'
+        uses: negz/create-tag@v1
         with:
-          script: |
-            await github.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: "refs/tags/" + context.payload.repository.master_branch,
-              sha: context.sha
-            });
-          github-token: ${{ secrets.MY_GITHUB_TOKEN  }}
-        if: ${{ steps.latest_tag.outputs.latestTag == '0.0.0' }}
-      - name: Create New Tag
-        uses: actions/github-script@v4
-        with:
-          script: |
-            await github.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: "refs/tags/" + '${{ steps.increment_tag.outputs.new_tag }}',
-              sha: context.sha
-            });
-          github-token: ${{ secrets.MY_GITHUB_TOKEN  }}
-        if: ${{ steps.latest_tag.outputs.latestTag != '0.0.0' }}
+          version: ${{ env.CURRENT_VERSION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
+        if: steps.checkTag.outputs.exists == 'false'
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN  }}
         with:
-          tag_name: ${{ steps.increment_tag.outputs.new_tag }}
-          release_name: Release ${{ steps.increment_tag.outputs.new_tag }}
-          body: Automated release created by GitHub Actions
+          tag_name: ${{ env.CURRENT_VERSION }}
+          release_name: ${{ env.CURRENT_VERSION }}
+          body: |
+            ${{ github.event.pull_request.body }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
+      - name: Create a Comment
+        uses: actions/github-script@0.8.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Packages with version [${{ env.CURRENT_VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.CURRENT_VERSION }}) have been released 🎉'
+            })              
 
   setup-build-publish-deploy-develop:
     if: contains(github.ref, 'refs/heads/develop')
