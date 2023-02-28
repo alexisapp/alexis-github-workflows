@@ -53,8 +53,8 @@ env:
 
 jobs:
   create-tag:
-    if: contains(github.ref, 'refs/heads/master')
     runs-on: ubuntu-latest
+    if: contains(github.ref, 'refs/heads/master')
     steps:
       - name: Get Latest Tag
         uses: actions/github-script@v4
