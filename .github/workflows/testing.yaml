@@ -54,7 +54,7 @@ env:
   SANDBOX_PROJECT: alexishr-sandbox
   STAGING_CLUSTER: staging-cluster-80833fd
   STAGING_PROJECT: alexishr-staging-296019
-  GITHUB_TOKEN: ${{ inputs.github_token }}
+  GITHUB_TOKEN: ${{ secrets.ALEXIS_GH_TOKEN }}
 
 
 jobs:
@@ -72,9 +72,11 @@ jobs:
           AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
           echo "Author name: $AUTHOR_NAME"
           echo "Author email: $AUTHOR_EMAIL"
-          echo  ${{ inputs.github_token }}
+          echo  ${{ env.GITHUB_TOKEN }}
       - name: Create new tag
         if: steps.latest_tag.outputs.tag == ''
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
         run: |
           export NEW_TAG="1.0.0"
           git config --global user.email $AUTHOR_NAME
@@ -82,279 +84,279 @@ jobs:
           git tag -a $NEW_TAG -m "Tag $NEW_TAG"
           git push origin $NEW_TAG
 
-  create_tag_and_release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Get Latest Tag
-        id: get_latest_tag
-        uses: actions-ecosystem/action-get-latest-tag@v1
+  # create_tag_and_release:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+  #     - name: Get Latest Tag
+  #       id: get_latest_tag
+  #       uses: actions-ecosystem/action-get-latest-tag@v1
 
-      - name: Parse Latest Git Tag
-        id: parse_latest_tag
-        run: |
-          TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
-          echo "::set-output name=tag::${TAG}"
-      - name: Ensure Latest Git Tag
-        uses: mukunku/tag-exists-action@v1.0.0
-        id: checkTag
-        with:
-          tag: ${{ env.CURRENT_VERSION }}
+  #     - name: Parse Latest Git Tag
+  #       id: parse_latest_tag
+  #       run: |
+  #         TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
+  #         echo "::set-output name=tag::${TAG}"
+  #     - name: Ensure Latest Git Tag
+  #       uses: mukunku/tag-exists-action@v1.0.0
+  #       id: checkTag
+  #       with:
+  #         tag: ${{ env.CURRENT_VERSION }}
 
 
-      - name: Create Git Tag
-        if: steps.checkTag.outputs.exists == 'false'
-        uses: negz/create-tag@v1
-        with:
-          version: ${{ env.CURRENT_VERSION }}
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
+  #     - name: Create Git Tag
+  #       if: steps.checkTag.outputs.exists == 'false'
+  #       uses: negz/create-tag@v1
+  #       with:
+  #         version: ${{ env.CURRENT_VERSION }}
+  #         token: ${{ secrets.MY_GITHUB_TOKEN }}
 
-      - name: Create Release
-        if: steps.checkTag.outputs.exists == 'false'
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ env.CURRENT_VERSION }}
-          release_name: ${{ env.CURRENT_VERSION }}
-          body: |
-            ${{ github.event.pull_request.body }}
-          draft: false
-          prerelease: false
-      - name: Create a Comment
-        uses: actions/github-script@0.8.0
-        with:
-          github-token: ${{ secrets.MY_GITHUB_TOKEN }}
-          script: |
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'Packages with version [${{ env.CURRENT_VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.CURRENT_VERSION }}) have been released 🎉'
-            })              
+  #     - name: Create Release
+  #       if: steps.checkTag.outputs.exists == 'false'
+  #       uses: actions/create-release@v1
+  #       with:
+  #         tag_name: ${{ env.CURRENT_VERSION }}
+  #         release_name: ${{ env.CURRENT_VERSION }}
+  #         body: |
+  #           ${{ github.event.pull_request.body }}
+  #         draft: false
+  #         prerelease: false
+  #     - name: Create a Comment
+  #       uses: actions/github-script@0.8.0
+  #       with:
+  #         github-token: ${{ secrets.MY_GITHUB_TOKEN }}
+  #         script: |
+  #           github.issues.createComment({
+  #             issue_number: context.issue.number,
+  #             owner: context.repo.owner,
+  #             repo: context.repo.repo,
+  #             body: 'Packages with version [${{ env.CURRENT_VERSION }}](https://github.com/${{ github.repository }}/releases/tag/${{ env.CURRENT_VERSION }}) have been released 🎉'
+  #           })              
 
-  setup-build-publish-deploy-develop:
-    if: contains(github.ref, 'refs/heads/develop')
-    runs-on: ubuntu-latest
-    environment: develop
-    steps:
-    - uses: act10ns/slack@v2
-      with:
-        status: starting
-        config: .github/config/slack.yaml
+  # setup-build-publish-deploy-develop:
+  #   if: contains(github.ref, 'refs/heads/develop')
+  #   runs-on: ubuntu-latest
+  #   environment: develop
+  #   steps:
+  #   - uses: act10ns/slack@v2
+  #     with:
+  #       status: starting
+  #       config: .github/config/slack.yaml
 
-    - name: Checkout
-      uses: actions/checkout@v3
+  #   - name: Checkout
+  #     uses: actions/checkout@v3
     
-    # It could be hardcoded in ENV
-    - name: Set Variables
-      run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
-         echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
-         echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
-         echo ${GITHUB_SHA::8}
-         echo ${{ inputs.migrations }}
-         echo ${{ inputs.workers }}
-         echo ${{ inputs.cronjobs }}
+  #   # It could be hardcoded in ENV
+  #   - name: Set Variables
+  #     run: |-
+  #        echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
+  #        echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+  #        echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+  #        echo ${GITHUB_SHA::8}
+  #        echo ${{ inputs.migrations }}
+  #        echo ${{ inputs.workers }}
+  #        echo ${{ inputs.cronjobs }}
 
-    - name: Setup gcloud CLI Dev
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }} #${{ secrets.GKE_SA }}
-        project_id: alexishr-images        
+  #   - name: Setup gcloud CLI Dev
+  #     uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+  #     with:
+  #       service_account_key: ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }} #${{ secrets.GKE_SA }}
+  #       project_id: alexishr-images        
 
-    # Configure Docker to use the gcloud command-line tool as a credential
-    - run: |-
-        gcloud --quiet auth configure-docker       
+  #   # Configure Docker to use the gcloud command-line tool as a credential
+  #   - run: |-
+  #       gcloud --quiet auth configure-docker       
 
-    # # Build the Docker image
-    - name: Build 
-      run: |-
-        docker build \
-          -f ${{ inputs.dockerfile_name }} \
-          --tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" \
-          --build-arg NPM_AUTH_TOKEN="$NPM_AUTH_TOKEN" \
-          --build-arg SENTRY_RELEASE="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_REF" \
-          .
-      env:
-        DOCKER_BUILDKIT: 1           
+  #   # # Build the Docker image
+  #   - name: Build 
+  #     run: |-
+  #       docker build \
+  #         -f ${{ inputs.dockerfile_name }} \
+  #         --tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" \
+  #         --build-arg NPM_AUTH_TOKEN="$NPM_AUTH_TOKEN" \
+  #         --build-arg SENTRY_RELEASE="$GITHUB_SHA" \
+  #         --build-arg GITHUB_REF="$GITHUB_SHA" \
+  #         --build-arg GITHUB_REF="$GITHUB_REF" \
+  #         .
+  #     env:
+  #       DOCKER_BUILDKIT: 1           
 
-    - name: Publish branch (GCR)
-      run: |
-        IMAGE_ID=eu.gcr.io/alexishr-images/$IMAGE
+  #   - name: Publish branch (GCR)
+  #     run: |
+  #       IMAGE_ID=eu.gcr.io/alexishr-images/$IMAGE
         
-        # Change all uppercase to lowercase
-        IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-        echo IMAGE_ID=$IMAGE_ID
-        docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:develop
-        docker push $IMAGE_ID:$GITHUB_SHA
-        docker push $IMAGE_ID:develop 
+  #       # Change all uppercase to lowercase
+  #       IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+  #       echo IMAGE_ID=$IMAGE_ID
+  #       docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:develop
+  #       docker push $IMAGE_ID:$GITHUB_SHA
+  #       docker push $IMAGE_ID:develop 
 
-    - name: Publish commit (GCR)
-      run: |-
-        docker push "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"            
+  #   - name: Publish commit (GCR)
+  #     run: |-
+  #       docker push "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"            
 
-    - name: Notify Humanitec
-      run: |
-        curl \
-        -X POST \
-        -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
-        -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
-        "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"            
+  #   - name: Notify Humanitec
+  #     run: |
+  #       curl \
+  #       -X POST \
+  #       -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
+  #       -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
+  #       "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"            
 
-     # Deploy the Docker image to the GKE cluster
-     # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
-    - name: Get the GKE credentials so we can deploy to the cluster
-      uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
-      with:
-        cluster_name: ${{ env.DEV_CLUSTER }}
-        location: "europe-west1"
-        credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
-        project_id: ${{ env.DEV_PROJECT }}       
-    - name: Deploy Dev
-      run: |-
-        kubectl -n dev set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-        kubectl -n dev rollout status deployment/$DEPLOYMENT-server-deployment
-        kubectl -n dev get services -o wide
-        if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n dev set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-         kubectl -n dev create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
-        fi
-        if [[ ${{ inputs.workers }} == 'true' ]]; then
-          kubectl -n dev set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" || kubectl -n dev set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment ${{ inputs.WORKER_CONATINER_NAME }}="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-          kubectl -n dev rollout status deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment
-        fi        
+  #    # Deploy the Docker image to the GKE cluster
+  #    # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
+  #   - name: Get the GKE credentials so we can deploy to the cluster
+  #     uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+  #     with:
+  #       cluster_name: ${{ env.DEV_CLUSTER }}
+  #       location: "europe-west1"
+  #       credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
+  #       project_id: ${{ env.DEV_PROJECT }}       
+  #   - name: Deploy Dev
+  #     run: |-
+  #       kubectl -n dev set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #       kubectl -n dev rollout status deployment/$DEPLOYMENT-server-deployment
+  #       kubectl -n dev get services -o wide
+  #       if [[ ${{ inputs.migrations }} == 'true' ]]; then
+  #        kubectl -n dev set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #        kubectl -n dev create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
+  #       fi
+  #       if [[ ${{ inputs.workers }} == 'true' ]]; then
+  #         kubectl -n dev set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" || kubectl -n dev set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment ${{ inputs.WORKER_CONATINER_NAME }}="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #         kubectl -n dev rollout status deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment
+  #       fi        
 
-    - name: Get the GKE credentials so we can deploy to the cluster
-      uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
-      with:
-        cluster_name: ${{ env.TEST_CLUSTER }}
-        location: "europe-west1"
-        credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
-        project_id: ${{ env.TEST_PROJECT }}      
-    - name: Deploy Test
-      run: |-
-        kubectl -n test get po
-        kubectl -n test set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-        kubectl -n test rollout status deployment/$DEPLOYMENT-server-deployment
-        kubectl -n test get services -o wide 
-        if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n test set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-         kubectl -n test create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
-        fi
-        if [[ ${{ inputs.workers }} == 'true' ]]; then
-          kubectl -n test set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" || kubectl -n test set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment ${{ inputs.WORKER_CONATINER_NAME }}="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-          kubectl -n test rollout status deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment
-        fi                      
+  #   - name: Get the GKE credentials so we can deploy to the cluster
+  #     uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+  #     with:
+  #       cluster_name: ${{ env.TEST_CLUSTER }}
+  #       location: "europe-west1"
+  #       credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
+  #       project_id: ${{ env.TEST_PROJECT }}      
+  #   - name: Deploy Test
+  #     run: |-
+  #       kubectl -n test get po
+  #       kubectl -n test set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #       kubectl -n test rollout status deployment/$DEPLOYMENT-server-deployment
+  #       kubectl -n test get services -o wide 
+  #       if [[ ${{ inputs.migrations }} == 'true' ]]; then
+  #        kubectl -n test set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #        kubectl -n test create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
+  #       fi
+  #       if [[ ${{ inputs.workers }} == 'true' ]]; then
+  #         kubectl -n test set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" || kubectl -n test set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment ${{ inputs.WORKER_CONATINER_NAME }}="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #         kubectl -n test rollout status deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment
+  #       fi                      
     
-    - uses: act10ns/slack@v2
-      with:
-        status: ${{ job.status }}
-        config: .github/config/slack.yaml
-      if: always()
+  #   - uses: act10ns/slack@v2
+  #     with:
+  #       status: ${{ job.status }}
+  #       config: .github/config/slack.yaml
+  #     if: always()
 
-  setup-build-publish-deploy-staging:
-    if: contains(github.ref, 'refs/heads/release*')
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-    - uses: act10ns/slack@v2
-      with:
-        status: starting
-        config: .github/config/slack.yaml
+  # setup-build-publish-deploy-staging:
+  #   if: contains(github.ref, 'refs/heads/release*')
+  #   runs-on: ubuntu-latest
+  #   environment: staging
+  #   steps:
+  #   - uses: act10ns/slack@v2
+  #     with:
+  #       status: starting
+  #       config: .github/config/slack.yaml
 
-    - name: Checkout
-      uses: actions/checkout@v3
+  #   - name: Checkout
+  #     uses: actions/checkout@v3
     
-    # It could be hardcoded in ENV
-    - name: Set Variables
-      run: |-
-         echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
-         echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
-         echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
-         echo ${GITHUB_SHA::8}
-         echo ${{ inputs.migrations }}
-         echo ${{ inputs.workers }}
-         echo ${{ inputs.cronjobs }}
+  #   # It could be hardcoded in ENV
+  #   - name: Set Variables
+  #     run: |-
+  #        echo "IMAGE=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  )" >> $GITHUB_ENV
+  #        echo "IMAGE_NAME=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+  #        echo "DEPLOYMENT=$( echo $GITHUB_REPOSITORY | cut -d '/' -f 2  | sed 's/alexis-//g' )" >> $GITHUB_ENV
+  #        echo ${GITHUB_SHA::8}
+  #        echo ${{ inputs.migrations }}
+  #        echo ${{ inputs.workers }}
+  #        echo ${{ inputs.cronjobs }}
 
-    - name: Setup gcloud CLI Dev
-      uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
-      with:
-        service_account_key: ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }} #${{ secrets.GKE_SA }}
-        project_id: alexishr-images       
+  #   - name: Setup gcloud CLI Dev
+  #     uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+  #     with:
+  #       service_account_key: ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }} #${{ secrets.GKE_SA }}
+  #       project_id: alexishr-images       
 
-    # Configure Docker to use the gcloud command-line tool as a credential
-    - run: |-
-        gcloud --quiet auth configure-docker       
+  #   # Configure Docker to use the gcloud command-line tool as a credential
+  #   - run: |-
+  #       gcloud --quiet auth configure-docker       
 
-    # # Build the Docker image
-    - name: Build 
-      run: |-
-        docker build \
-          -f prod.Dockerfile \
-          --tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" \
-          --build-arg NPM_AUTH_TOKEN="$NPM_AUTH_TOKEN" \
-          --build-arg SENTRY_RELEASE="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_REF" \
-          .
-      env:
-        DOCKER_BUILDKIT: 1            
+  #   # # Build the Docker image
+  #   - name: Build 
+  #     run: |-
+  #       docker build \
+  #         -f prod.Dockerfile \
+  #         --tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" \
+  #         --build-arg NPM_AUTH_TOKEN="$NPM_AUTH_TOKEN" \
+  #         --build-arg SENTRY_RELEASE="$GITHUB_SHA" \
+  #         --build-arg GITHUB_REF="$GITHUB_SHA" \
+  #         --build-arg GITHUB_REF="$GITHUB_REF" \
+  #         .
+  #     env:
+  #       DOCKER_BUILDKIT: 1            
 
-    - name: Publish branch (GCR)
-      run: |
-        IMAGE_ID=eu.gcr.io/alexishr-images/$IMAGE
+  #   - name: Publish branch (GCR)
+  #     run: |
+  #       IMAGE_ID=eu.gcr.io/alexishr-images/$IMAGE
         
-        # Change all uppercase to lowercase
-        IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-        echo IMAGE_ID=$IMAGE_ID
-        docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:master
-        docker push $IMAGE_ID:$GITHUB_SHA
-        docker push $IMAGE_ID:master
+  #       # Change all uppercase to lowercase
+  #       IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+  #       echo IMAGE_ID=$IMAGE_ID
+  #       docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:master
+  #       docker push $IMAGE_ID:$GITHUB_SHA
+  #       docker push $IMAGE_ID:master
    
-    - name: Publish commit (GCR)
-      run: |-
-        docker push "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #   - name: Publish commit (GCR)
+  #     run: |-
+  #       docker push "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
 
-    - name: Notify Humanitec
-      run: |
-        curl \
-        -X POST \
-        -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
-        -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
-        "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"           
+  #   - name: Notify Humanitec
+  #     run: |
+  #       curl \
+  #       -X POST \
+  #       -H "Authorization: Bearer ${{ secrets.HUMANITEC_TOKEN }}" \
+  #       -d '{"branch":"'"${GITHUB_REF#refs/heads/}"'","commit":"'"${GITHUB_SHA}"'","image":"'"eu.gcr.io/alexishr-images/${IMAGE}:${GITHUB_SHA}"'"}' \
+  #       "https://api.humanitec.io/orgs/alexishr/images/$IMAGE/builds"           
 
-     # Deploy the Docker image to the GKE cluster
-     # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
-    - name: Get the GKE credentials so we can deploy to the cluster
-      uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
-      with:
-        cluster_name: ${{ env.STAGING_CLUSTER }}
-        location: "europe-west1"
-        credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
-        project_id: ${{ env.STAGING_PROJECT }}       
-    - name: Deploy Staging
-      run: |-
-        kubectl -n staging set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-        kubectl -n staging rollout status deployment/$DEPLOYMENT-server-deployment
-        kubectl -n staging get services -o wide
-        if [[ ${{ inputs.migrations }} == 'true' ]]; then
-         kubectl -n staging set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-         kubectl -n staging create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
-        fi
-        if [[ ${{ inputs.workers }} == 'true' ]]; then
-          kubectl -n staging set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" || kubectl -n staging set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment ${{ inputs.WORKER_CONATINER_NAME }}="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
-          kubectl -n staging rollout status deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment
-        fi                      
+  #    # Deploy the Docker image to the GKE cluster
+  #    # .spec.progressDeadlineSeconds to a value such as 30 (default is 600 or ten minutes) and kubectl rollout status deployment will wait for this amount of time before displaying an error message and exiting with a non zero exit code
+  #   - name: Get the GKE credentials so we can deploy to the cluster
+  #     uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+  #     with:
+  #       cluster_name: ${{ env.STAGING_CLUSTER }}
+  #       location: "europe-west1"
+  #       credentials:  ${{ secrets.GOOGLE_DOCKER_IMAGE_SA_KEY }}
+  #       project_id: ${{ env.STAGING_PROJECT }}       
+  #   - name: Deploy Staging
+  #     run: |-
+  #       kubectl -n staging set image deployment/$DEPLOYMENT-server-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #       kubectl -n staging rollout status deployment/$DEPLOYMENT-server-deployment
+  #       kubectl -n staging get services -o wide
+  #       if [[ ${{ inputs.migrations }} == 'true' ]]; then
+  #        kubectl -n staging set image cronjob/$DEPLOYMENT-migration $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #        kubectl -n staging create job --from=cronjob/$DEPLOYMENT-migration $DEPLOYMENT-migration-${GITHUB_SHA::8}
+  #       fi
+  #       if [[ ${{ inputs.workers }} == 'true' ]]; then
+  #         kubectl -n staging set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment $IMAGE_NAME="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" || kubectl -n staging set image deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment ${{ inputs.WORKER_CONATINER_NAME }}="eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA"
+  #         kubectl -n staging rollout status deployment/$DEPLOYMENT-${{ inputs.WORKER_NAME }}-deployment
+  #       fi                      
     
-    - uses: act10ns/slack@v2
-      with:
-        status: ${{ job.status }}
-        config: .github/config/slack.yaml
-      if: always()
+  #   - uses: act10ns/slack@v2
+  #     with:
+  #       status: ${{ job.status }}
+  #       config: .github/config/slack.yaml
+  #     if: always()
 
-  setup-build-publish-deploy-release:
+  # setup-build-publish-deploy-release:
     if: contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     environment: production
