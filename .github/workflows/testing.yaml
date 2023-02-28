@@ -95,8 +95,7 @@ jobs:
         id: checkTag
         with:
           tag: ${{ env.CURRENT_VERSION }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+
 
       - name: Create Git Tag
         if: steps.checkTag.outputs.exists == 'false'
@@ -115,8 +114,6 @@ jobs:
             ${{ github.event.pull_request.body }}
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  
       - name: Create a Comment
         uses: actions/github-script@0.8.0
         with:
