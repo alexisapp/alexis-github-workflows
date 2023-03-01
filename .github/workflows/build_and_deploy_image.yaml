@@ -49,9 +49,107 @@ env:
   SANDBOX_PROJECT: alexishr-sandbox
   STAGING_CLUSTER: staging-cluster-80833fd
   STAGING_PROJECT: alexishr-staging-296019
-
+  GITHUB_TOKEN: ${{ secrets.ALEXIS_GH_TOKEN }}
 
 jobs:
+  create_tag_and_release:
+    if: contains(github.ref, 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get Latest Tag
+        id: get_latest_tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+
+      - name: Parse Latest Git Tag
+        id: parse_latest_tag
+        run: |
+          TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
+          echo "tag=${TAG}" >>$GITHUB_OUTPUT
+      
+      - name: Get Next Tag Semver
+        id: get_next_tag_semver
+        uses: WyriHaximus/github-action-next-semvers@v1
+        with:
+          version: ${{ steps.parse_latest_tag.outputs.tag }}
+
+      - name: Define Current Version
+        run: |
+          CURRENT_VERSION=${{ steps.get_next_tag_semver.outputs.v_minor }}
+          echo $CURRENT_VERSION
+          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
+          
+      - name: Ensure Latest Git Tag
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: checkTag
+        with:
+          tag: ${{ env.CURRENT_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}          
+
+      - name: Create Git Tag
+        if: steps.checkTag.outputs.exists == 'false'
+        uses: negz/create-tag@v1
+        with:
+          version: ${{ env.CURRENT_VERSION }}
+          token:  ${{ env.GITHUB_TOKEN }}
+
+      - name: Create Release
+        if: steps.checkTag.outputs.exists == 'false'
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.CURRENT_VERSION }}
+          release_name: ${{ env.CURRENT_VERSION }}
+          body: |
+            ${{ github.event.pull_request.body }}
+          draft: false
+          prerelease: false
+
+  create_release_branch:
+    needs: create_tag_and_release
+    if: contains(github.ref, 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get Latest Tag
+        id: get_latest_tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+
+      - name: Parse Latest Git Tag
+        id: parse_latest_tag
+        run: |
+          TAG=$(echo ${{ steps.get_latest_tag.outputs.tag }} | cut -d 'v' -f 2)
+          echo "tag=${TAG}" >>$GITHUB_OUTPUT
+      
+      - name: Get Next Tag Semver
+        id: get_next_tag_semver
+        uses: WyriHaximus/github-action-next-semvers@v1
+        with:
+          version: ${{ steps.parse_latest_tag.outputs.tag }}
+
+      - name: Define Current Version
+        run: |
+          CURRENT_VERSION=${{ steps.get_next_tag_semver.outputs.v_minor }}
+          echo $CURRENT_VERSION
+          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
+          
+      - name: Ensure Latest Git Tag
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: checkTag
+        with:
+          tag: ${{ env.CURRENT_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+
+      - name: Create branch    
+        uses: peterjgrainger/action-create-branch@v2.2.0
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        with:
+          branch: release-${{ env.CURRENT_VERSION }}          
+
   setup-build-publish-deploy-develop:
     if: contains(github.ref, 'refs/heads/develop')
     runs-on: ubuntu-latest
@@ -175,7 +273,7 @@ jobs:
       if: always()
 
   setup-build-publish-deploy-staging:
-    if: contains(github.ref, 'refs/heads/master')
+    if: startsWith(github.ref, 'refs/heads/release-')
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -212,7 +310,7 @@ jobs:
     - name: Build 
       run: |-
         docker build \
-          -f prod.Dockerfile \
+          -f ${{ inputs.dockerfile_name }} \
           --tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" \
           --build-arg NPM_AUTH_TOKEN="$NPM_AUTH_TOKEN" \
           --build-arg SENTRY_RELEASE="$GITHUB_SHA" \
@@ -312,7 +410,7 @@ jobs:
     - name: Build 
       run: |-
         docker build \
-          -f prod.Dockerfile \
+          -f ${{ inputs.dockerfile_name }} \
           --tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" \
           --build-arg NPM_AUTH_TOKEN="$NPM_AUTH_TOKEN" \
           --build-arg SENTRY_RELEASE="$GITHUB_SHA" \
@@ -329,9 +427,19 @@ jobs:
         # Change all uppercase to lowercase
         IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
         echo IMAGE_ID=$IMAGE_ID
-        docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:master
-        docker push $IMAGE_ID:$GITHUB_SHA
-        docker push $IMAGE_ID:master
+
+        # Extract the tag from the Git reference
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          TAG=${GITHUB_REF#refs/tags/}
+          docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" "$IMAGE_ID:$TAG" $IMAGE_ID:production
+          docker push $IMAGE_ID:$GITHUB_SHA
+          docker push $IMAGE_ID:$TAG
+          docker push $IMAGE_ID:production
+        else
+          docker tag "eu.gcr.io/alexishr-images/$IMAGE:$GITHUB_SHA" $IMAGE_ID:production
+          docker push $IMAGE_ID:$GITHUB_SHA
+          docker push $IMAGE_ID:production
+        fi
 
     - name: Publish commit (GCR)
       run: |-
